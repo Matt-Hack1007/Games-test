@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1e">
+    <title>Arcade.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+
+    <div class="container" id="mainContainer">
+        
+        <!-- MENU PRINCIPAL -->
+        <div class="view active" id="menuView">
+            <h1>Arcade.io</h1>
+            <div class="buttons">
+                <button class="btn-play" onclick="showGames()">JOUER</button>
+                <button class="btn-records" onclick="showRecords()">🏆 RECORDS</button>
+                <button class="btn-settings" onclick="openSettings()">⚙ PARAMÈTRES</button>
+                <button class="btn-settings" onclick="toggleMobileFullscreen()" id="fullscreenBtn" style="display: none;">⛶ PLEIN ÉCRAN</button>
+            </div>
+        </div>
+
+        <!-- VUE RECORDS -->
+        <div class="view" id="recordsView">
+            <h2 class="games-title">🏆 RECORDS 🏆</h2>
+            <div class="records-list" id="recordsList"></div>
+            <div class="records-actions">
+                <button class="btn-back" onclick="showMenu()">◀ RETOUR</button>
+                <button class="btn-reset" onclick="resetRecords()">🗑 EFFACER</button>
+            </div>
+        </div>
+
+        <!-- SÉLECTION DE JEUX -->
+        <div class="view" id="gamesView">
+            <h2 class="games-title">▶ CHOISIS UN JEU ◀</h2>
+            <div class="games-grid">
+                <button class="game-card" onclick="launchGame('asteroids')">
+                    <div class="game-icon icon-asteroids"></div>
+                    <span class="game-name">Asteroïds</span>
+                    <span class="game-desc">DÉTRUIS LES ROCHERS</span>
+                </button>
+                <button class="game-card" onclick="launchGame('paddle')">
+                    <div class="game-icon icon-paddle"></div>
+                    <span class="game-name">Paddle</span>
+                    <span class="game-desc">CASSE-BRIQUES</span>
+                </button>
+                <button class="game-card" onclick="launchGame('tennis')">
+                    <div class="game-icon icon-tennis"></div>
+                    <span class="game-name">Tennis</span>
+                    <span class="game-desc">DUEL DE PONG</span>
+                </button>
+                <button class="game-card" onclick="launchGame('invaders')">
+                    <div class="game-icon icon-invaders"></div>
+                    <span class="game-name">Invaders</span>
+                    <span class="game-desc">DÉFENDS LA TERRE</span>
+                </button>
+                <button class="game-card" onclick="launchGame('snake')">
+                    <div class="game-icon icon-snake"></div>
+                    <span class="game-name">Snake</span>
+                    <span class="game-desc">LE SERPENT</span>
+                </button>
+                <button class="game-card" onclick="launchGame('tetris')">
+                    <div class="game-icon icon-tetris"></div>
+                    <span class="game-name">Tetris</span>
+                    <span class="game-desc">EMPILE LES BLOCS</span>
+                </button>
+                <button class="game-card" onclick="launchGame('flappy')">
+                    <div class="game-icon icon-flappy"></div>
+                    <span class="game-name">Flappy</span>
+                    <span class="game-desc">VOLE ET ÉVITE</span>
+                </button>
+                <button class="game-card" onclick="launchGame('pacman')">
+                    <div class="game-icon icon-pacman"></div>
+                    <span class="game-name">Pac-Man</span>
+                    <span class="game-desc">MANGE LES GOMMES</span>
+                </button>
+            </div>
+            <button class="btn-back" onclick="showMenu()">◀ RETOUR</button>
+        </div>
+
+        <!-- MENUS DE JEUX -->
+        <div class="view" id="asteroidsView">
+            <div class="space-scene" id="spaceScene"></div>
+            <h2 class="game-menu-title">☄ Asteroïds</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('asteroids')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="asteroids" onclick="selectDiff(this, 'asteroids', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="asteroids" onclick="selectDiff(this, 'asteroids', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="asteroids" onclick="selectDiff(this, 'asteroids', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>↑</strong> Propulsion<br>
+                            <strong>← →</strong> Rotation<br>
+                            <strong>ESPACE</strong> Tirer<br>
+                            <strong>↓</strong> Hyperespace<br><br>
+                            <em>💡 Utilise l'hyperespace en cas d'urgence !</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="paddleView">
+            <div class="brick-scene" id="brickScene"></div>
+            <h2 class="game-menu-title">🏓 Paddle</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('paddle')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="paddle" onclick="selectDiff(this, 'paddle', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="paddle" onclick="selectDiff(this, 'paddle', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="paddle" onclick="selectDiff(this, 'paddle', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>🎨 PERSONNALISATION</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="difficulty-label">MODE DE NIVEAU</div>
+                        <div class="difficulty-options">
+                            <button class="difficulty-btn selected" data-mode="paddle" onclick="selectPaddleMode(this, 'random')">ALÉATOIRE</button>
+                            <button class="difficulty-btn" data-mode="paddle" onclick="selectPaddleMode(this, 'custom')">PERSONNALISÉ</button>
+                        </div>
+                        <button class="btn-editor-small" onclick="openEditor()">✏️ ÉDITER UN NIVEAU</button>
+                    </div>
+                </div>
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ À PROPOS DU JEU...</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <span class="section-title">🎮 CONTRÔLES</span>
+                            <strong>← →</strong> Déplacer la raquette<br>
+                            <strong>ESPACE</strong> Lancer la balle<br>
+                            <strong>ÉCHAP</strong> Quitter<br><br>
+                            <span class="section-title">🎁 BONUS DISPONIBLES</span>
+                            <strong style="color:#00ff88">W</strong> — Raquette large<br>
+                            <strong style="color:#ff00ff">M</strong> — Balle multiple<br>
+                            <strong style="color:#00ffff">S</strong> — Balle lente<br>
+                            <strong style="color:#ff3366">♥</strong> — Vie extra<br><br>
+                            <em>💡 Casse toutes les briques pour gagner !</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="tennisView">
+            <div class="tennis-scene" id="tennisScene"></div>
+            <h2 class="game-menu-title">🎾 Tennis</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('tennis')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="tennis" onclick="selectDiff(this, 'tennis', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="tennis" onclick="selectDiff(this, 'tennis', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="tennis" onclick="selectDiff(this, 'tennis', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>👥 ADVERSAIRE</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="difficulty-options">
+                            <button class="difficulty-btn selected" data-mode="tennis" onclick="selectTennisMode(this, 'ai')">🤖 IA</button>
+                            <button class="difficulty-btn" data-mode="tennis" onclick="selectTennisMode(this, '2p')">👥 2 JOUEURS</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>Mode 1 joueur :</strong><br>
+                            <strong>↑ ↓</strong> ou <strong>Q / A</strong> Déplacer<br><br>
+                            <strong>Mode 2 joueurs :</strong><br>
+                            <strong>J1</strong> ↑ ↓ ou Q/A<br>
+                            <strong>J2</strong> P / L<br><br>
+                            <strong>ESPACE</strong> Servir
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="invadersView">
+            <div class="invaders-scene" id="invadersScene"></div>
+            <h2 class="game-menu-title">👾 Invaders</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('invaders')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="invaders" onclick="selectDiff(this, 'invaders', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="invaders" onclick="selectDiff(this, 'invaders', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="invaders" onclick="selectDiff(this, 'invaders', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>🛸 ENNEMIS</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong style="color:#00ffff">Crabe</strong> — 10 points<br>
+                            <strong style="color:#ff00ff">Poulpe</strong> — 20 points<br>
+                            <strong style="color:#00ff88">Calamar</strong> — 30 points<br>
+                            <strong style="color:#ffdd00">OVNI</strong> — 50 à 300 pts ⭐<br><br>
+                            <em>💡 Tire vite sur l'OVNI quand il apparaît !</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>← →</strong> Déplacer<br>
+                            <strong>ESPACE</strong> Tirer<br>
+                            <strong>ÉCHAP</strong> Quitter
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="snakeView">
+            <div class="snake-scene" id="snakeScene"></div>
+            <h2 class="game-menu-title">🐍 Snake</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('snake')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="snake" onclick="selectDiff(this, 'snake', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="snake" onclick="selectDiff(this, 'snake', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="snake" onclick="selectDiff(this, 'snake', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>← ↑ → ↓</strong> Diriger<br>
+                            <strong>ESPACE</strong> Pause<br>
+                            <strong>ÉCHAP</strong> Quitter<br><br>
+                            <em>💡 Mange les pommes 🍎 pour grandir !</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="tetrisView">
+            <div class="tetris-scene" id="tetrisScene"></div>
+            <h2 class="game-menu-title">🧱 Tetris</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('tetris')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="tetris" onclick="selectDiff(this, 'tetris', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="tetris" onclick="selectDiff(this, 'tetris', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="tetris" onclick="selectDiff(this, 'tetris', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>✨ NIVEAUX SPÉCIAUX</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            Tous les <strong>5 niveaux</strong> :<br><br>
+                            <strong style="color:#ff3366">❤️ COEUR</strong><br>
+                            <strong style="color:#ffdd00">🔺 PYRAMIDE</strong><br>
+                            <strong style="color:#00ffff">⭐ ÉTOILE</strong><br><br>
+                            <em>💡 Détruis-les pour plus de points !</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>← →</strong> Déplacer<br>
+                            <strong>↑</strong> Rotation<br>
+                            <strong>↓</strong> Descendre<br>
+                            <strong>ESPACE</strong> Chute
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="flappyView">
+            <div class="flappy-scene" id="flappyScene"></div>
+            <h2 class="game-menu-title">🐦 Flappy</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('flappy')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="flappy" onclick="selectDiff(this, 'flappy', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="flappy" onclick="selectDiff(this, 'flappy', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="flappy" onclick="selectDiff(this, 'flappy', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>ESPACE</strong> ou <strong>CLIC</strong> Sauter<br>
+                            <strong>ÉCHAP</strong> Quitter<br><br>
+                            <em>💡 Vole entre les tuyaux sans les toucher !</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <div class="view" id="pacmanView">
+            <div class="pacman-scene" id="pacmanScene"></div>
+            <h2 class="game-menu-title">🟡 Pac-Man</h2>
+            <div class="game-menu-buttons">
+                <button class="btn-start" onclick="startGame('pacman')">JOUER</button>
+            </div>
+            <div class="difficulty-under-play">
+                <div class="difficulty-label">🎯 DIFFICULTÉ</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn" data-game="pacman" onclick="selectDiff(this, 'pacman', 'easy')">FACILE</button>
+                    <button class="difficulty-btn selected" data-game="pacman" onclick="selectDiff(this, 'pacman', 'normal')">NORMAL</button>
+                    <button class="difficulty-btn" data-game="pacman" onclick="selectDiff(this, 'pacman', 'hard')">DIFFICILE</button>
+                </div>
+            </div>
+            <div class="rubriques-container">
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>👻 FANTÔMES</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong style="color:#ff0000">🔴 ROUGE</strong> — Sort en premier<br>
+                            <strong style="color:#ffb8ff">🩷 ROSE</strong> — Sort après 3 secondes<br>
+                            <strong style="color:#00ffff">🔵 CYAN</strong> — Sort après 6 secondes<br>
+                            <strong style="color:#ffb852">🟠 ORANGE</strong> — Sort après 9 secondes<br><br>
+                            <em>💡 Mange une super gomme pour les rendre vulnérables !</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="rubrique">
+                    <button class="rubrique-header" onclick="toggleRubrique(this)">
+                        <span>ℹ️ COMMENT JOUER</span>
+                        <span class="rubrique-icon">▼</span>
+                    </button>
+                    <div class="rubrique-content">
+                        <div class="rubrique-desc">
+                            <strong>← ↑ → ↓</strong> Diriger Pac-Man<br>
+                            <strong>ESPACE</strong> Pause<br>
+                            <strong>ÉCHAP</strong> Quitter<br><br>
+                            <em>💡 Mange toutes les gommes pour passer au niveau suivant !</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-menu-buttons" style="margin-top: 2rem;">
+                <button class="btn-back" onclick="backToGames()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <!-- ÉDITEUR PADDLE -->
+        <div class="view" id="editorView">
+            <h2 class="games-title">✏️ ÉDITEUR DE NIVEAUX</h2>
+            <div class="editor-container">
+                <div class="editor-color-picker" id="editorColorPicker"></div>
+                <div class="editor-grid" id="editorGrid"></div>
+                <div class="editor-controls">
+                    <button class="btn-start" onclick="saveCustomLevel()">💾 SAUVEGARDER</button>
+                    <button class="btn-back" onclick="showView('paddleView')">◀ RETOUR</button>
+                </div>
+                <button class="btn-reset" onclick="clearEditor()">🗑 TOUT EFFACER</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- VUES DE JEU (générées dynamiquement) -->
+    <div id="gameViewsContainer"></div>
+
+    <!-- POPUP NOUVEAU RECORD -->
+    <div class="new-record-popup" id="newRecordPopup">
+        <div class="new-record-text">🏆 NOUVEAU RECORD ! 🏆</div>
+        <div class="new-record-score" id="newRecordScore"></div>
+    </div>
+
+    <!-- MODALE PARAMÈTRES -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h2>⚙ PARAMÈTRES ⚙</h2>
+            <div class="setting-item">
+                <label>SON</label>
+                <button class="toggle" onclick="toggleBtn(this)">ON</button>
+            </div>
+            <div class="setting-item">
+                <label>MUSIQUE</label>
+                <button class="toggle" onclick="toggleBtn(this)">ON</button>
+            </div>
+            <div class="setting-item">
+                <label>VOLUME</label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="30" oninput="setVolume(this.value)">
+            </div>
+            <div class="setting-item">
+                <label>PLEIN ÉCRAN</label>
+                <button class="toggle" onclick="toggleFullscreen(this)">OFF</button>
+            </div>
+            <button class="btn-close" onclick="closeSettings()">FERMER</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS (ordre important !) -->
+    <script src="js/device.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/records.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/game-views.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/asteroids.js"></script>
+    <script src="js/paddle.js"></script>
+    <script src="js/tennis.js"></script>
+    <script src="js/invaders.js"></script>
+    <script src="js/snake.js"></script>
+    <script src="js/tetris.js"></script>
+    <script src="js/flappy.js"></script>
+    <script src="js/pacman.js"></script>
+    <script src="js/keyboard.js"></script>
+    <script src="js/touch-controls.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
