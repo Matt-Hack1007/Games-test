@@ -1,11 +1,11 @@
 // ============================================
 // 🐦 FLAPPY
 // ============================================
-let fCanvas, fCtx, fW, fH;
-let fSettings, fGame, fKeys, fBird;
-let fPipes = [], fParticles = [];
-let fGroundOffset = 0;
-let fGameLoopId = null;
+var fCanvas, fCtx, fW, fH;
+var fSettings, fGame, fKeys, fBird;
+var fPipes = [], fParticles = [];
+var fGroundOffset = 0;
+var fGameLoopId = null;
 
 const flappyDiffSettings = {
     easy:   { gravity: 0.4,  jumpForce: -7, pipeGap: 240, pipeSpacing: 480, pipeSpeed: 3 },
@@ -15,7 +15,10 @@ const flappyDiffSettings = {
 
 function initFlappy() {
     fCanvas = document.getElementById('flappyCanvas');
-    if (!fCanvas) return;
+    if (!fCanvas) {
+        console.error('❌ Canvas Flappy introuvable !');
+        return;
+    }
     fCtx = fCanvas.getContext('2d');
     
     fSettings = flappyDiffSettings.normal;
@@ -26,6 +29,7 @@ function initFlappy() {
     fGroundOffset = 0;
     
     fResize();
+    console.log('✅ Flappy initialisé');
 }
 
 function fResize() {
@@ -66,25 +70,32 @@ function fSpawnPipe(x) {
 }
 
 function fUpdateHUD() {
-    document.getElementById('flappyScore').textContent = fGame.score;
-    document.getElementById('flappyLevel').textContent = fGame.level;
-    document.getElementById('flappyLives').textContent = fGame.best;
+    const scoreEl = document.getElementById('flappyScore');
+    const levelEl = document.getElementById('flappyLevel');
+    const livesEl = document.getElementById('flappyLives');
+    if (scoreEl) scoreEl.textContent = fGame.score;
+    if (levelEl) levelEl.textContent = fGame.level;
+    if (livesEl) livesEl.textContent = fGame.best;
 }
 
 function startFlappyGame() {
     fSettings = flappyDiffSettings[difficulties.flappy];
     showView('flappyGameView');
-    document.getElementById('flappyGameView').classList.add('active');
+    const gv = document.getElementById('flappyGameView');
+    if (gv) gv.classList.add('active');
     fGame.running = false; fGame.gameOver = false;
-    document.getElementById('flappyStartMsg').classList.add('active');
-    document.getElementById('flappyGameOver').classList.remove('active');
+    const msg = document.getElementById('flappyStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('flappyGameOver');
+    if (go) go.classList.remove('active');
     fResize(); fInit();
     if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
     fRenderLoop();
 }
 
 function fStartGame() {
-    document.getElementById('flappyStartMsg').classList.remove('active');
+    const msg = document.getElementById('flappyStartMsg');
+    if (msg) msg.classList.remove('active');
     fInit();
     fGame.running = true;
     fJump();
@@ -94,9 +105,12 @@ function quitToFlappyMenu() {
     fGame.running = false; fGame.gameOver = false;
     if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
     fGameLoopId = null;
-    document.getElementById('flappyStartMsg').classList.remove('active');
-    document.getElementById('flappyGameOver').classList.remove('active');
-    document.getElementById('flappyGameView').classList.remove('active');
+    const msg = document.getElementById('flappyStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('flappyGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('flappyGameView');
+    if (gv) gv.classList.remove('active');
     showView('flappyView');
 }
 
@@ -170,9 +184,12 @@ function fEndGame() {
     playExplosion();
     setTimeout(playGameOver, 300);
     const isNewRecord = updateRecord('flappy', fGame.score);
-    document.getElementById('flappyFinalScore').textContent = fGame.score;
-    document.getElementById('flappyBestScore').textContent = '🏆 RECORD : ' + getBestScore('flappy');
-    document.getElementById('flappyGameOver').classList.add('active');
+    const fs = document.getElementById('flappyFinalScore');
+    const bs = document.getElementById('flappyBestScore');
+    const go = document.getElementById('flappyGameOver');
+    if (fs) fs.textContent = fGame.score;
+    if (bs) bs.textContent = '🏆 RECORD : ' + getBestScore('flappy');
+    if (go) go.classList.add('active');
     if (isNewRecord) setTimeout(() => showNewRecordPopup(fGame.score), 1200);
 }
 
