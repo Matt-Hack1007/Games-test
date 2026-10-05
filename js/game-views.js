@@ -1,21 +1,26 @@
 // ============================================
 // 🎮 VUES DE JEU (générées dynamiquement)
 // ============================================
-function createGameView(gameId, hudConfig, controlsText, options = {}) {
+function createGameView(gameId, hudConfig, controlsText) {
     const container = document.getElementById('gameViewsContainer');
+    if (!container) {
+        console.error('gameViewsContainer introuvable !');
+        return;
+    }
     
     const view = document.createElement('div');
     view.className = 'game-view';
     view.id = `${gameId}GameView`;
     
-    const canvasId = `${gameId}Canvas`;
+    let hudHtml = '';
+    if (hudConfig.score) hudHtml += `<div class="game-hud-score">SCORE : <span id="${gameId}Score">0</span></div>`;
+    if (hudConfig.level) hudHtml += `<div class="game-hud-level">${hudConfig.levelText || 'NIVEAU'} <span id="${gameId}Level">1</span></div>`;
+    if (hudConfig.lives) hudHtml += `<div class="game-hud-lives">${hudConfig.livesText || 'VIES'} : <span id="${gameId}Lives">♥♥♥</span></div>`;
     
     view.innerHTML = `
-        <canvas id="${canvasId}"></canvas>
+        <canvas id="${gameId}Canvas"></canvas>
         <div class="game-hud">
-            ${hudConfig.score ? `<div class="game-hud-score">SCORE : <span id="${gameId}Score">0</span></div>` : ''}
-            ${hudConfig.level ? `<div class="game-hud-level">${hudConfig.levelText || 'NIVEAU'} <span id="${gameId}Level">1</span></div>` : ''}
-            ${hudConfig.lives ? `<div class="game-hud-lives">${hudConfig.livesText || 'VIES'} : <span id="${gameId}Lives">♥♥♥</span></div>` : ''}
+            ${hudHtml}
         </div>
         <div class="game-controls">${controlsText}</div>
         <div class="start-game-message" id="${gameId}StartMsg">APPUIE SUR ESPACE POUR COMMENCER</div>
@@ -33,20 +38,26 @@ function createGameView(gameId, hudConfig, controlsText, options = {}) {
     container.appendChild(view);
 }
 
-// Création de toutes les vues de jeu
 function createAllGameViews() {
+    const container = document.getElementById('gameViewsContainer');
+    if (!container) {
+        console.error('gameViewsContainer manquant dans le HTML !');
+        return;
+    }
+    
+    // ASTEROIDS
     createGameView('asteroids',
         { score: true, level: true, lives: true },
         `<span>↑</span> PROPULSION | <span>← →</span> ROTATION | <span>ESPACE</span> TIR | <span>↓</span> HYPERESPACE | <span>ÉCHAP</span> QUITTER`
     );
     
+    // PADDLE
     createGameView('paddle',
         { score: true, level: true, lives: true },
         `<span>← →</span> DÉPLACER | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`
     );
     
-    // Tennis : HUD spécial
-    const tennisContainer = document.getElementById('gameViewsContainer');
+    // TENNIS
     const tennisView = document.createElement('div');
     tennisView.className = 'game-view';
     tennisView.id = 'tennisGameView';
@@ -71,28 +82,33 @@ function createAllGameViews() {
             </div>
         </div>
     `;
-    tennisContainer.appendChild(tennisView);
+    container.appendChild(tennisView);
     
+    // INVADERS
     createGameView('invaders',
         { score: true, level: true, lives: true, levelText: 'VAGUE' },
         `<span>← →</span> DÉPLACER | <span>ESPACE</span> TIRER | <span>ÉCHAP</span> QUITTER`
     );
     
+    // SNAKE
     createGameView('snake',
-        { score: true, level: true, livesText: 'LONGUEUR' },
+        { score: true, level: true, lives: true, livesText: 'LONGUEUR' },
         `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
     );
     
+    // TETRIS
     createGameView('tetris',
-        { score: true, level: true, livesText: 'LIGNES' },
+        { score: true, level: true, lives: true, livesText: 'LIGNES' },
         `<span>← →</span> DÉPLACER | <span>↑</span> ROTATION | <span>↓</span> DESCENDRE | <span>ESPACE</span> CHUTE | <span>ÉCHAP</span> QUITTER`
     );
     
+    // FLAPPY
     createGameView('flappy',
-        { score: true, level: true, livesText: 'MEILLEUR' },
+        { score: true, level: true, lives: true, livesText: 'MEILLEUR' },
         `<span>ESPACE</span> ou <span>CLIC</span> VOLER | <span>ÉCHAP</span> QUITTER`
     );
     
+    // PACMAN
     createGameView('pacman',
         { score: true, level: true, lives: true },
         `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
@@ -117,19 +133,30 @@ function startGame(gameId) {
 
 function restartGame(gameId) {
     const map = {
-        asteroids: 'asteroidsGameOver', paddle: 'paddleGameOver', tennis: 'tennisGameOver',
-        invaders: 'invadersGameOver', snake: 'snakeGameOver', tetris: 'tetrisGameOver',
-        flappy: 'flappyGameOver', pacman: 'pacmanGameOver'
+        asteroids: 'asteroidsGameOver',
+        paddle: 'paddleGameOver',
+        tennis: 'tennisGameOver',
+        invaders: 'invadersGameOver',
+        snake: 'snakeGameOver',
+        tetris: 'tetrisGameOver',
+        flappy: 'flappyGameOver',
+        pacman: 'pacmanGameOver'
     };
-    document.getElementById(map[gameId]).classList.remove('active');
+    const el = document.getElementById(map[gameId]);
+    if (el) el.classList.remove('active');
     startGame(gameId);
 }
 
 function quitToMenu(gameId) {
     const fnMap = {
-        asteroids: quitToAsteroidsMenu, paddle: quitToPaddleMenu, tennis: quitToTennisMenu,
-        invaders: quitToInvadersMenu, snake: quitToSnakeMenu, tetris: quitToTetrisMenu,
-        flappy: quitToFlappyMenu, pacman: quitToPacmanMenu
+        asteroids: quitToAsteroidsMenu,
+        paddle: quitToPaddleMenu,
+        tennis: quitToTennisMenu,
+        invaders: quitToInvadersMenu,
+        snake: quitToSnakeMenu,
+        tetris: quitToTetrisMenu,
+        flappy: quitToFlappyMenu,
+        pacman: quitToPacmanMenu
     };
     if (fnMap[gameId]) fnMap[gameId]();
 }
