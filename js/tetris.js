@@ -1,13 +1,13 @@
 // ============================================
-// 🧱 TETRIS
+// 🧱 TETRIS (corrigé + tactile)
 // ============================================
-let teCanvas, teCtx, teW, teH, teGridSize = 30, teCols = 10, teRows = 20;
-let teOffsetX = 0, teOffsetY = 0;
-let teSettings, teGame, teKeys;
-let teBoard = [], teCurrent = null, teNext = null;
-let teLastFall = 0;
-let teGameLoopId = null;
-let teSpecialPatternShown = false;
+var teCanvas, teCtx, teW, teH, teGridSize = 30, teCols = 10, teRows = 20;
+var teOffsetX = 0, teOffsetY = 0;
+var teSettings, teGame, teKeys;
+var teBoard = [], teCurrent = null, teNext = null;
+var teLastFall = 0;
+var teGameLoopId = null;
+var teSpecialPatternShown = false;
 
 const tetrisDiffSettings = {
     easy:   { fallSpeed: 800 },
@@ -33,7 +33,10 @@ const SPECIAL_PATTERNS = [
 
 function initTetris() {
     teCanvas = document.getElementById('tetrisCanvas');
-    if (!teCanvas) return;
+    if (!teCanvas) {
+        console.error('❌ Canvas Tetris introuvable !');
+        return;
+    }
     teCtx = teCanvas.getContext('2d');
     
     teSettings = tetrisDiffSettings.normal;
@@ -42,6 +45,7 @@ function initTetris() {
     teBoard = [];
     
     teResize();
+    console.log('✅ Tetris initialisé');
 }
 
 function teResize() {
@@ -67,7 +71,9 @@ function teCreatePiece() {
 
 function teInit() {
     teResize();
-    teGame.score = 0; teGame.level = 1; teGame.lines = 0;
+    teGame.score = 0;
+    teGame.level = 1;
+    teGame.lines = 0;
     teGame.gameOver = false;
     teBoard = [];
     for (let r = 0; r < teRows; r++) teBoard.push(new Array(teCols).fill(null));
@@ -79,37 +85,50 @@ function teInit() {
 }
 
 function teUpdateHUD() {
-    document.getElementById('tetrisScore').textContent = teGame.score;
-    document.getElementById('tetrisLevel').textContent = teGame.level;
-    document.getElementById('tetrisLives').textContent = teGame.lines;
+    const scoreEl = document.getElementById('tetrisScore');
+    const levelEl = document.getElementById('tetrisLevel');
+    const linesEl = document.getElementById('tetrisLives');
+    if (scoreEl) scoreEl.textContent = teGame.score;
+    if (levelEl) levelEl.textContent = teGame.level;
+    if (linesEl) linesEl.textContent = teGame.lines;
 }
 
 function startTetrisGame() {
     teSettings = tetrisDiffSettings[difficulties.tetris];
     showView('tetrisGameView');
-    document.getElementById('tetrisGameView').classList.add('active');
-    teGame.running = false; teGame.gameOver = false;
-    document.getElementById('tetrisStartMsg').classList.add('active');
-    document.getElementById('tetrisGameOver').classList.remove('active');
-    teResize(); teInit();
+    const gv = document.getElementById('tetrisGameView');
+    if (gv) gv.classList.add('active');
+    teGame.running = false;
+    teGame.gameOver = false;
+    const msg = document.getElementById('tetrisStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('tetrisGameOver');
+    if (go) go.classList.remove('active');
+    teResize();
+    teInit();
     if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
     teRenderLoop();
 }
 
 function teStartGame() {
-    document.getElementById('tetrisStartMsg').classList.remove('active');
+    const msg = document.getElementById('tetrisStartMsg');
+    if (msg) msg.classList.remove('active');
     teInit();
     teGame.running = true;
     playBeep(880, 0.1);
 }
 
 function quitToTetrisMenu() {
-    teGame.running = false; teGame.gameOver = false;
+    teGame.running = false;
+    teGame.gameOver = false;
     if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
     teGameLoopId = null;
-    document.getElementById('tetrisStartMsg').classList.remove('active');
-    document.getElementById('tetrisGameOver').classList.remove('active');
-    document.getElementById('tetrisGameView').classList.remove('active');
+    const msg = document.getElementById('tetrisStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('tetrisGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('tetrisGameView');
+    if (gv) gv.classList.remove('active');
     showView('tetrisView');
 }
 
@@ -187,6 +206,7 @@ function teClearLines() {
         teGame.level = 1 + Math.floor(teGame.lines / 10);
         teUpdateHUD();
         playPickup();
+        
         if (teGame.level > 0 && teGame.level % 5 === 0 && !teSpecialPatternShown) {
             const pattern = SPECIAL_PATTERNS[Math.floor(Math.random() * SPECIAL_PATTERNS.length)];
             const startRow = Math.floor((teRows - pattern.rows.length) / 2);
@@ -207,13 +227,22 @@ function teClearLines() {
 }
 
 function teEndGame() {
-    teGame.running = false; teGame.gameOver = true;
+    teGame.running = false;
+    teGame.gameOver = true;
     playGameOver();
-    const isNewRecord = updateRecord('tetris', teGame.score);
-    document.getElementById('tetrisFinalScore').textContent = teGame.score;
-    document.getElementById('tetrisBestScore').textContent = '🏆 RECORD : ' + getBestScore('tetris');
-    document.getElementById('tetrisGameOver').classList.add('active');
-    if (isNewRecord) setTimeout(() => showNewRecordPopup(teGame.score), 800);
+    
+    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('tetris', teGame.score) : false;
+    const fs = document.getElementById('tetrisFinalScore');
+    const bs = document.getElementById('tetrisBestScore');
+    const go = document.getElementById('tetrisGameOver');
+    if (fs) fs.textContent = teGame.score;
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD : ' + getBestScore('tetris');
+    }
+    if (go) go.classList.add('active');
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(teGame.score), 800);
+    }
 }
 
 function teUpdate() {
@@ -235,12 +264,14 @@ function teDraw() {
     if (!teCtx) return;
     teCtx.fillStyle = '#0a0a1e';
     teCtx.fillRect(0, 0, teW, teH);
+    
     teCtx.save();
     teCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
     teCtx.lineWidth = 2;
     teCtx.shadowColor = '#00ffff'; teCtx.shadowBlur = 10;
     teCtx.strokeRect(teOffsetX, teOffsetY, teCols * teGridSize, teRows * teGridSize);
     teCtx.restore();
+    
     teCtx.strokeStyle = 'rgba(0, 255, 255, 0.06)';
     teCtx.lineWidth = 1;
     for (let i = 0; i <= teCols; i++) {
@@ -255,7 +286,9 @@ function teDraw() {
         teCtx.lineTo(teOffsetX + teCols * teGridSize, teOffsetY + i * teGridSize);
         teCtx.stroke();
     }
+    
     if (!teGame.running && !teGame.gameOver) return;
+    
     for (let r = 0; r < teRows; r++) {
         for (let c = 0; c < teCols; c++) {
             if (teBoard[r][c]) {
@@ -267,6 +300,7 @@ function teDraw() {
             }
         }
     }
+    
     if (teCurrent) {
         for (let r = 0; r < teCurrent.shape.length; r++) {
             for (let c = 0; c < teCurrent.shape[r].length; c++) {

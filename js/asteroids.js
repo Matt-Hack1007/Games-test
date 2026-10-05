@@ -1,10 +1,10 @@
 // ============================================
-// ☄ ASTEROIDS
+// ☄ ASTEROIDS (corrigé + tactile)
 // ============================================
-let aCanvas, aCtx, aW, aH;
-let aSettings, aGame, aKeys, aShip;
-let aAsteroids, aBullets, aParticles;
-let aGameLoopId = null;
+var aCanvas, aCtx, aW, aH;
+var aSettings, aGame, aKeys, aShip;
+var aAsteroids = [], aBullets = [], aParticles = [];
+var aGameLoopId = null;
 
 const asteroidsDiffSettings = {
     easy:   { asteroidCount: 3, asteroidSpeed: 0.8, maxBullets: 5, lives: 5 },
@@ -14,7 +14,10 @@ const asteroidsDiffSettings = {
 
 function initAsteroids() {
     aCanvas = document.getElementById('asteroidsCanvas');
-    if (!aCanvas) return;
+    if (!aCanvas) {
+        console.error('❌ Canvas Asteroids introuvable !');
+        return;
+    }
     aCtx = aCanvas.getContext('2d');
     
     aSettings = asteroidsDiffSettings.normal;
@@ -24,6 +27,7 @@ function initAsteroids() {
     aAsteroids = []; aBullets = []; aParticles = [];
     
     aResize();
+    console.log('✅ Asteroids initialisé');
 }
 
 function aResize() {
@@ -68,38 +72,51 @@ function aInit() {
 }
 
 function aUpdateHUD() {
-    document.getElementById('asteroidsScore').textContent = aGame.score;
-    document.getElementById('asteroidsLevel').textContent = aGame.level;
-    document.getElementById('asteroidsLives').textContent = '♥'.repeat(Math.max(0, aGame.lives));
+    const scoreEl = document.getElementById('asteroidsScore');
+    const levelEl = document.getElementById('asteroidsLevel');
+    const livesEl = document.getElementById('asteroidsLives');
+    if (scoreEl) scoreEl.textContent = aGame.score;
+    if (levelEl) levelEl.textContent = aGame.level;
+    if (livesEl) livesEl.textContent = '♥'.repeat(Math.max(0, aGame.lives));
 }
 
 function startAsteroidsGame() {
     aSettings = asteroidsDiffSettings[difficulties.asteroids];
     showView('asteroidsGameView');
-    document.getElementById('asteroidsGameView').classList.add('active');
-    aGame.running = false; aGame.gameOver = false;
-    document.getElementById('asteroidsStartMsg').classList.add('active');
-    document.getElementById('asteroidsGameOver').classList.remove('active');
-    aResize(); aInit();
+    const gv = document.getElementById('asteroidsGameView');
+    if (gv) gv.classList.add('active');
+    aGame.running = false;
+    aGame.gameOver = false;
+    const msg = document.getElementById('asteroidsStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('asteroidsGameOver');
+    if (go) go.classList.remove('active');
+    aResize();
+    aInit();
     if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
     aRenderLoop();
 }
 
 function aStartGame() {
-    document.getElementById('asteroidsStartMsg').classList.remove('active');
+    const msg = document.getElementById('asteroidsStartMsg');
+    if (msg) msg.classList.remove('active');
     aInit();
     aGame.running = true;
     playBeep(880, 0.1);
 }
 
 function quitToAsteroidsMenu() {
-    aGame.running = false; aGame.gameOver = false;
+    aGame.running = false;
+    aGame.gameOver = false;
     stopThrustSound();
     if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
     aGameLoopId = null;
-    document.getElementById('asteroidsStartMsg').classList.remove('active');
-    document.getElementById('asteroidsGameOver').classList.remove('active');
-    document.getElementById('asteroidsGameView').classList.remove('active');
+    const msg = document.getElementById('asteroidsStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('asteroidsGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('asteroidsGameView');
+    if (gv) gv.classList.remove('active');
     showView('asteroidsView');
 }
 
@@ -175,14 +192,23 @@ function aDestroyShip() {
 }
 
 function aEndGame() {
-    aGame.running = false; aGame.gameOver = true;
+    aGame.running = false;
+    aGame.gameOver = true;
     stopThrustSound();
     playGameOver();
-    const isNewRecord = updateRecord('asteroids', aGame.score);
-    document.getElementById('asteroidsFinalScore').textContent = aGame.score;
-    document.getElementById('asteroidsBestScore').textContent = '🏆 RECORD : ' + getBestScore('asteroids');
-    document.getElementById('asteroidsGameOver').classList.add('active');
-    if (isNewRecord) setTimeout(() => showNewRecordPopup(aGame.score), 800);
+    
+    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('asteroids', aGame.score) : false;
+    const fs = document.getElementById('asteroidsFinalScore');
+    const bs = document.getElementById('asteroidsBestScore');
+    const go = document.getElementById('asteroidsGameOver');
+    if (fs) fs.textContent = aGame.score;
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD : ' + getBestScore('asteroids');
+    }
+    if (go) go.classList.add('active');
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(aGame.score), 800);
+    }
 }
 
 function aUpdate() {

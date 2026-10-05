@@ -1,12 +1,12 @@
 // ============================================
-// 👾 INVADERS
+// 👾 INVADERS (corrigé + tactile)
 // ============================================
-let iCanvas, iCtx, iW, iH;
-let iSettings, iGame, iKeys, iPlayer;
-let iInvaders, iBullets, iInvaderBullets, iParticles;
-let iDirection = 1, iSpeedMult = 1, iShootCooldown = 0;
-let iUfo = null, iUfoTimer = 0;
-let iGameLoopId = null;
+var iCanvas, iCtx, iW, iH;
+var iSettings, iGame, iKeys, iPlayer;
+var iInvaders = [], iBullets = [], iInvaderBullets = [], iParticles = [];
+var iDirection = 1, iSpeedMult = 1, iShootCooldown = 0;
+var iUfo = null, iUfoTimer = 0;
+var iGameLoopId = null;
 
 const invadersDiffSettings = {
     easy:   { rows: 3, cols: 8, moveSpeed: 0.5, fireRate: 0.004, playerSpeed: 7, bulletSpeed: 10, lives: 5 },
@@ -20,7 +20,10 @@ const INVADER_C_PAT = ["00011000","00111100","01111110","11011011","11111111","0
 
 function initInvaders() {
     iCanvas = document.getElementById('invadersCanvas');
-    if (!iCanvas) return;
+    if (!iCanvas) {
+        console.error('❌ Canvas Invaders introuvable !');
+        return;
+    }
     iCtx = iCanvas.getContext('2d');
     
     iSettings = invadersDiffSettings.normal;
@@ -32,6 +35,7 @@ function initInvaders() {
     iUfo = null; iUfoTimer = 0;
     
     iResize();
+    console.log('✅ Invaders initialisé');
 }
 
 function iResize() {
@@ -75,37 +79,50 @@ function iSpawnInvaders() {
 }
 
 function iUpdateHUD() {
-    document.getElementById('invadersScore').textContent = iGame.score;
-    document.getElementById('invadersLevel').textContent = iGame.level;
-    document.getElementById('invadersLives').textContent = '♥'.repeat(Math.max(0, iGame.lives));
+    const scoreEl = document.getElementById('invadersScore');
+    const levelEl = document.getElementById('invadersLevel');
+    const livesEl = document.getElementById('invadersLives');
+    if (scoreEl) scoreEl.textContent = iGame.score;
+    if (levelEl) levelEl.textContent = iGame.level;
+    if (livesEl) livesEl.textContent = '♥'.repeat(Math.max(0, iGame.lives));
 }
 
 function startInvadersGame() {
     iSettings = invadersDiffSettings[difficulties.invaders];
     showView('invadersGameView');
-    document.getElementById('invadersGameView').classList.add('active');
-    iGame.running = false; iGame.gameOver = false;
-    document.getElementById('invadersStartMsg').classList.add('active');
-    document.getElementById('invadersGameOver').classList.remove('active');
-    iResize(); iInit();
+    const gv = document.getElementById('invadersGameView');
+    if (gv) gv.classList.add('active');
+    iGame.running = false;
+    iGame.gameOver = false;
+    const msg = document.getElementById('invadersStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('invadersGameOver');
+    if (go) go.classList.remove('active');
+    iResize();
+    iInit();
     if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
     iRenderLoop();
 }
 
 function iStartGame() {
-    document.getElementById('invadersStartMsg').classList.remove('active');
+    const msg = document.getElementById('invadersStartMsg');
+    if (msg) msg.classList.remove('active');
     iInit();
     iGame.running = true;
     playBeep(880, 0.1);
 }
 
 function quitToInvadersMenu() {
-    iGame.running = false; iGame.gameOver = false;
+    iGame.running = false;
+    iGame.gameOver = false;
     if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
     iGameLoopId = null;
-    document.getElementById('invadersStartMsg').classList.remove('active');
-    document.getElementById('invadersGameOver').classList.remove('active');
-    document.getElementById('invadersGameView').classList.remove('active');
+    const msg = document.getElementById('invadersStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('invadersGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('invadersGameView');
+    if (gv) gv.classList.remove('active');
     showView('invadersView');
 }
 
@@ -124,6 +141,7 @@ function iUpdate() {
     if (iPlayer.x < 0) iPlayer.x = 0;
     if (iPlayer.x + iPlayer.width > iW) iPlayer.x = iW - iPlayer.width;
     if (iKeys.Space) iShoot();
+    
     const alive = iInvaders.filter(v => v.alive);
     if (alive.length === 0) {
         iGame.level++;
@@ -134,6 +152,7 @@ function iUpdate() {
         playPickup();
         return;
     }
+    
     const factor = iSpeedMult * (1 + (iSettings.rows * iSettings.cols - alive.length) * 0.02);
     let moveX = iDirection * iSettings.moveSpeed * factor;
     let hitEdge = false;
@@ -147,6 +166,7 @@ function iUpdate() {
     } else {
         for (const inv of alive) inv.x += moveX;
     }
+    
     for (const inv of alive) {
         if (Math.random() < iSettings.fireRate) {
             const col = alive.filter(v => v.col === inv.col);
@@ -154,6 +174,7 @@ function iUpdate() {
             if (bottom === inv) iInvaderBullets.push({ x: inv.x + inv.width / 2, y: inv.y + inv.height, vy: iSettings.bulletSpeed * 0.5 });
         }
     }
+    
     iUfoTimer++;
     if (!iUfo && iUfoTimer > 300 && Math.random() < 0.005) {
         const fromLeft = Math.random() < 0.5;
@@ -166,6 +187,7 @@ function iUpdate() {
         };
         playBeep(1200, 0.15, 'sine', 0.12);
     }
+    
     if (iUfo) {
         iUfo.x += iUfo.vx;
         if (iUfo.x < -100 || iUfo.x > iW + 100) iUfo = null;
@@ -194,6 +216,7 @@ function iUpdate() {
             }
         }
     }
+    
     for (let i = iBullets.length - 1; i >= 0; i--) {
         const b = iBullets[i];
         b.y += b.vy;
@@ -212,6 +235,7 @@ function iUpdate() {
             }
         }
     }
+    
     for (let i = iInvaderBullets.length - 1; i >= 0; i--) {
         const b = iInvaderBullets[i];
         b.y += b.vy;
@@ -222,9 +246,11 @@ function iUpdate() {
             return;
         }
     }
+    
     for (const inv of alive) {
         if (inv.y + inv.height >= iPlayer.y) { iDestroyPlayer(); return; }
     }
+    
     for (let i = iParticles.length - 1; i >= 0; i--) {
         const p = iParticles[i];
         p.x += p.vx; p.y += p.vy;
@@ -250,13 +276,22 @@ function iDestroyPlayer() {
 }
 
 function iEndGame() {
-    iGame.running = false; iGame.gameOver = true;
+    iGame.running = false;
+    iGame.gameOver = true;
     playGameOver();
-    const isNewRecord = updateRecord('invaders', iGame.score);
-    document.getElementById('invadersFinalScore').textContent = iGame.score;
-    document.getElementById('invadersBestScore').textContent = '🏆 RECORD : ' + getBestScore('invaders');
-    document.getElementById('invadersGameOver').classList.add('active');
-    if (isNewRecord) setTimeout(() => showNewRecordPopup(iGame.score), 800);
+    
+    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('invaders', iGame.score) : false;
+    const fs = document.getElementById('invadersFinalScore');
+    const bs = document.getElementById('invadersBestScore');
+    const go = document.getElementById('invadersGameOver');
+    if (fs) fs.textContent = iGame.score;
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD : ' + getBestScore('invaders');
+    }
+    if (go) go.classList.add('active');
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(iGame.score), 800);
+    }
 }
 
 function iDrawPattern(pattern, x, y, size, color) {
@@ -275,7 +310,9 @@ function iDraw() {
     iCtx.strokeStyle = 'rgba(0, 255, 255, 0.06)';
     for (let x = 0; x < iW; x += 40) { iCtx.beginPath(); iCtx.moveTo(x, 0); iCtx.lineTo(x, iH); iCtx.stroke(); }
     for (let y = 0; y < iH; y += 40) { iCtx.beginPath(); iCtx.moveTo(0, y); iCtx.lineTo(iW, y); iCtx.stroke(); }
+    
     if (!iGame.running && !iGame.gameOver) return;
+    
     for (const p of iParticles) {
         const alpha = p.life / p.maxLife;
         iCtx.save();
@@ -286,16 +323,19 @@ function iDraw() {
         iCtx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
         iCtx.restore();
     }
+    
     iCtx.save();
     iCtx.shadowColor = '#ffdd00'; iCtx.shadowBlur = 10;
     iCtx.fillStyle = '#ffdd00';
     for (const b of iBullets) iCtx.fillRect(b.x - 2, b.y - 8, 4, 12);
     iCtx.restore();
+    
     iCtx.save();
     iCtx.shadowColor = '#ff3366'; iCtx.shadowBlur = 10;
     iCtx.fillStyle = '#ff3366';
     for (const b of iInvaderBullets) iCtx.fillRect(b.x - 2, b.y, 4, 12);
     iCtx.restore();
+    
     for (const inv of iInvaders) {
         if (!inv.alive) continue;
         iCtx.save();
@@ -306,6 +346,7 @@ function iDraw() {
         iDrawPattern(inv.pattern, inv.x + (inv.width - pw) / 2, inv.y + (inv.height - ph) / 2, px, inv.color);
         iCtx.restore();
     }
+    
     if (iUfo) {
         iCtx.save();
         iCtx.shadowColor = '#ffdd00';
@@ -333,6 +374,7 @@ function iDraw() {
         iCtx.fillText(iUfo.points, iUfo.x + iUfo.width / 2, iUfo.y - 8);
         iCtx.restore();
     }
+    
     iCtx.save();
     iCtx.shadowColor = '#00ff88'; iCtx.shadowBlur = 12;
     iCtx.fillStyle = '#00ff88';

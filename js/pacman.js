@@ -1,11 +1,11 @@
 // ============================================
-// 🟡 PAC-MAN
+// 🟡 PAC-MAN (corrigé + tactile)
 // ============================================
-let pacCanvas, pacCtx, pacW, pacH, pacGridSize, pacOffsetX, pacOffsetY;
-let pacCurrentSettings, pacGame, pacPlayer;
-let pacGhosts = [], pacDots = [];
-let pacSuperTimer = 0, pacParticles = [];
-let pacGameLoopId = null, pacLastFrame = 0, pacDeathAnim = 0;
+var pacCanvas, pacCtx, pacW, pacH, pacGridSize, pacOffsetX, pacOffsetY;
+var pacCurrentSettings, pacGame, pacPlayer;
+var pacGhosts = [], pacDots = [];
+var pacSuperTimer = 0, pacParticles = [];
+var pacGameLoopId = null, pacLastFrame = 0, pacDeathAnim = 0;
 
 const PACMAN_MAZE = [
     "1111111111111111111",
@@ -47,7 +47,10 @@ const GHOST_COLORS = ['#ff0000', '#ffb8ff', '#00ffff', '#ffb852'];
 
 function initPacman() {
     pacCanvas = document.getElementById('pacmanCanvas');
-    if (!pacCanvas) return;
+    if (!pacCanvas) {
+        console.error('❌ Canvas Pac-Man introuvable !');
+        return;
+    }
     pacCtx = pacCanvas.getContext('2d');
     
     pacCurrentSettings = pacSettings.normal;
@@ -64,6 +67,7 @@ function initPacman() {
     pacDeathAnim = 0;
     
     pacResize();
+    console.log('✅ Pac-Man initialisé');
 }
 
 function pacResize() {
@@ -119,24 +123,11 @@ function pacInit() {
         }
     }
 
-    // 🎯 FANTÔMES : commencent DANS la maison et sortent un par un
     const ghostSetups = [
-        { 
-            col: 9, row: 8, homeCol: 9, homeRow: 8,
-            dir: { x: 0, y: -1 }, color: '#ff0000', exitDelay: 0
-        },
-        { 
-            col: 8, row: 8, homeCol: 8, homeRow: 8,
-            dir: { x: 0, y: -1 }, color: '#ffb8ff', exitDelay: 180
-        },
-        { 
-            col: 10, row: 8, homeCol: 10, homeRow: 8,
-            dir: { x: 0, y: -1 }, color: '#00ffff', exitDelay: 360
-        },
-        { 
-            col: 9, row: 7, homeCol: 9, homeRow: 7,
-            dir: { x: 0, y: -1 }, color: '#ffb852', exitDelay: 540
-        }
+        { col: 9, row: 8, homeCol: 9, homeRow: 8, dir: { x: 0, y: -1 }, color: '#ff0000', exitDelay: 0 },
+        { col: 8, row: 8, homeCol: 8, homeRow: 8, dir: { x: 0, y: -1 }, color: '#ffb8ff', exitDelay: 180 },
+        { col: 10, row: 8, homeCol: 10, homeRow: 8, dir: { x: 0, y: -1 }, color: '#00ffff', exitDelay: 360 },
+        { col: 9, row: 7, homeCol: 9, homeRow: 7, dir: { x: 0, y: -1 }, color: '#ffb852', exitDelay: 540 }
     ];
 
     for (let i = 0; i < pacCurrentSettings.ghostCount; i++) {
@@ -158,9 +149,12 @@ function pacInit() {
 }
 
 function pacUpdateHUD() {
-    document.getElementById('pacmanScore').textContent = pacGame.score;
-    document.getElementById('pacmanLevel').textContent = pacGame.level;
-    document.getElementById('pacmanLives').textContent = '♥'.repeat(Math.max(0, pacGame.lives));
+    const scoreEl = document.getElementById('pacmanScore');
+    const levelEl = document.getElementById('pacmanLevel');
+    const livesEl = document.getElementById('pacmanLives');
+    if (scoreEl) scoreEl.textContent = pacGame.score;
+    if (levelEl) levelEl.textContent = pacGame.level;
+    if (livesEl) livesEl.textContent = '♥'.repeat(Math.max(0, pacGame.lives));
 }
 
 function pacIsAligned(x, y) {
@@ -235,7 +229,6 @@ function pacMovePlayer(dt) {
 
 function pacMoveGhosts(dt) {
     for (const ghost of pacGhosts) {
-        // Timer de sortie
         if (ghost.exitDelay > 0) {
             ghost.exitDelay -= dt;
             if (ghost.exitDelay <= 0) {
@@ -244,7 +237,6 @@ function pacMoveGhosts(dt) {
             }
         }
         
-        // Fantôme en attente
         if (ghost.state === 'waiting') {
             const baseY = ghost.homeRow;
             const offset = Math.sin(performance.now() / 200 + ghost.homeCol) * 0.15;
@@ -252,7 +244,6 @@ function pacMoveGhosts(dt) {
             continue;
         }
         
-        // Fantôme mangé
         if (ghost.state === 'eaten') {
             const dx = ghost.homeCol - ghost.x;
             const dy = ghost.homeRow - ghost.y;
@@ -270,7 +261,6 @@ function pacMoveGhosts(dt) {
             continue;
         }
         
-        // Fantôme actif
         const speedMult = ghost.state === 'frightened' ? 0.55 : 1;
         const speed = ghost.speed * speedMult * dt;
         
@@ -434,21 +424,32 @@ function pacEndGame() {
     pacGame.running = false;
     pacGame.gameOver = true;
     playGameOver();
-    const isNewRecord = updateRecord('pacman', pacGame.score);
-    document.getElementById('pacmanFinalScore').textContent = pacGame.score;
-    document.getElementById('pacmanBestScore').textContent = '🏆 RECORD : ' + getBestScore('pacman');
-    document.getElementById('pacmanGameOver').classList.add('active');
-    if (isNewRecord) setTimeout(() => showNewRecordPopup(pacGame.score), 800);
+    
+    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('pacman', pacGame.score) : false;
+    const fs = document.getElementById('pacmanFinalScore');
+    const bs = document.getElementById('pacmanBestScore');
+    const go = document.getElementById('pacmanGameOver');
+    if (fs) fs.textContent = pacGame.score;
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD : ' + getBestScore('pacman');
+    }
+    if (go) go.classList.add('active');
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(pacGame.score), 800);
+    }
 }
 
 function startPacmanGame() {
     pacCurrentSettings = pacSettings[difficulties.pacman];
     showView('pacmanGameView');
-    document.getElementById('pacmanGameView').classList.add('active');
+    const gv = document.getElementById('pacmanGameView');
+    if (gv) gv.classList.add('active');
     pacGame.running = false;
     pacGame.gameOver = false;
-    document.getElementById('pacmanStartMsg').classList.add('active');
-    document.getElementById('pacmanGameOver').classList.remove('active');
+    const msg = document.getElementById('pacmanStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('pacmanGameOver');
+    if (go) go.classList.remove('active');
     pacInit();
     if (pacGameLoopId) cancelAnimationFrame(pacGameLoopId);
     pacLastFrame = performance.now();
@@ -456,7 +457,8 @@ function startPacmanGame() {
 }
 
 function pacStartGame() {
-    document.getElementById('pacmanStartMsg').classList.remove('active');
+    const msg = document.getElementById('pacmanStartMsg');
+    if (msg) msg.classList.remove('active');
     pacInit();
     pacGame.running = true;
     playBeep(880, 0.1);
@@ -467,9 +469,12 @@ function quitToPacmanMenu() {
     pacGame.gameOver = false;
     if (pacGameLoopId) cancelAnimationFrame(pacGameLoopId);
     pacGameLoopId = null;
-    document.getElementById('pacmanStartMsg').classList.remove('active');
-    document.getElementById('pacmanGameOver').classList.remove('active');
-    document.getElementById('pacmanGameView').classList.remove('active');
+    const msg = document.getElementById('pacmanStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('pacmanGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('pacmanGameView');
+    if (gv) gv.classList.remove('active');
     showView('pacmanView');
 }
 

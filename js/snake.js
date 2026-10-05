@@ -1,12 +1,12 @@
 // ============================================
-// 🐍 SNAKE
+// 🐍 SNAKE (corrigé + tactile)
 // ============================================
-let sCanvas, sCtx, sW, sH, sGridSize = 24, sCols, sRows;
-let sSettings, sGame, sKeys;
-let sSnake = [], sDir, sNextDir, sApple;
-let sLastTick = 0;
-let sGameLoopId = null;
-let sAppleEatenAnim = 0;
+var sCanvas, sCtx, sW, sH, sGridSize = 24, sCols, sRows;
+var sSettings, sGame, sKeys;
+var sSnake = [], sDir, sNextDir, sApple;
+var sLastTick = 0;
+var sGameLoopId = null;
+var sAppleEatenAnim = 0;
 
 const snakeDiffSettings = {
     easy:   { tickRate: 200, startLength: 3 },
@@ -16,7 +16,10 @@ const snakeDiffSettings = {
 
 function initSnake() {
     sCanvas = document.getElementById('snakeCanvas');
-    if (!sCanvas) return;
+    if (!sCanvas) {
+        console.error('❌ Canvas Snake introuvable !');
+        return;
+    }
     sCtx = sCanvas.getContext('2d');
     
     sSettings = snakeDiffSettings.normal;
@@ -28,6 +31,7 @@ function initSnake() {
     sSnake = [];
     
     sResize();
+    console.log('✅ Snake initialisé');
 }
 
 function sResize() {
@@ -69,37 +73,51 @@ function sSpawnApple() {
 }
 
 function sUpdateHUD() {
-    document.getElementById('snakeScore').textContent = sGame.score;
-    document.getElementById('snakeLevel').textContent = sGame.level;
-    document.getElementById('snakeLives').textContent = sSnake.length;
+    const scoreEl = document.getElementById('snakeScore');
+    const levelEl = document.getElementById('snakeLevel');
+    const lenEl = document.getElementById('snakeLives');
+    if (scoreEl) scoreEl.textContent = sGame.score;
+    if (levelEl) levelEl.textContent = sGame.level;
+    if (lenEl) lenEl.textContent = sSnake.length;
 }
 
 function startSnakeGame() {
     sSettings = snakeDiffSettings[difficulties.snake];
     showView('snakeGameView');
-    document.getElementById('snakeGameView').classList.add('active');
-    sGame.running = false; sGame.gameOver = false; sGame.paused = false;
-    document.getElementById('snakeStartMsg').classList.add('active');
-    document.getElementById('snakeGameOver').classList.remove('active');
-    sResize(); sInit();
+    const gv = document.getElementById('snakeGameView');
+    if (gv) gv.classList.add('active');
+    sGame.running = false;
+    sGame.gameOver = false;
+    sGame.paused = false;
+    const msg = document.getElementById('snakeStartMsg');
+    if (msg) msg.classList.add('active');
+    const go = document.getElementById('snakeGameOver');
+    if (go) go.classList.remove('active');
+    sResize();
+    sInit();
     if (sGameLoopId) cancelAnimationFrame(sGameLoopId);
     sRenderLoop();
 }
 
 function sStartGame() {
-    document.getElementById('snakeStartMsg').classList.remove('active');
+    const msg = document.getElementById('snakeStartMsg');
+    if (msg) msg.classList.remove('active');
     sInit();
     sGame.running = true;
     playBeep(880, 0.1);
 }
 
 function quitToSnakeMenu() {
-    sGame.running = false; sGame.gameOver = false;
+    sGame.running = false;
+    sGame.gameOver = false;
     if (sGameLoopId) cancelAnimationFrame(sGameLoopId);
     sGameLoopId = null;
-    document.getElementById('snakeStartMsg').classList.remove('active');
-    document.getElementById('snakeGameOver').classList.remove('active');
-    document.getElementById('snakeGameView').classList.remove('active');
+    const msg = document.getElementById('snakeStartMsg');
+    if (msg) msg.classList.remove('active');
+    const go = document.getElementById('snakeGameOver');
+    if (go) go.classList.remove('active');
+    const gv = document.getElementById('snakeGameView');
+    if (gv) gv.classList.remove('active');
     showView('snakeView');
 }
 
@@ -110,9 +128,14 @@ function sTick() {
     if (head.x >= sCols) head.x = 0;
     if (head.y < 0) head.y = sRows - 1;
     if (head.y >= sRows) head.y = 0;
+    
     for (let i = 0; i < sSnake.length; i++) {
-        if (sSnake[i].x === head.x && sSnake[i].y === head.y) { sEndGame(); return; }
+        if (sSnake[i].x === head.x && sSnake[i].y === head.y) {
+            sEndGame();
+            return;
+        }
     }
+    
     sSnake.unshift(head);
     if (head.x === sApple.x && head.y === sApple.y) {
         sGame.score += 10;
@@ -127,14 +150,23 @@ function sTick() {
 }
 
 function sEndGame() {
-    sGame.running = false; sGame.gameOver = true;
+    sGame.running = false;
+    sGame.gameOver = true;
     playExplosion();
     setTimeout(playGameOver, 300);
-    const isNewRecord = updateRecord('snake', sGame.score);
-    document.getElementById('snakeFinalScore').textContent = sGame.score;
-    document.getElementById('snakeBestScore').textContent = '🏆 RECORD : ' + getBestScore('snake');
-    document.getElementById('snakeGameOver').classList.add('active');
-    if (isNewRecord) setTimeout(() => showNewRecordPopup(sGame.score), 1200);
+    
+    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('snake', sGame.score) : false;
+    const fs = document.getElementById('snakeFinalScore');
+    const bs = document.getElementById('snakeBestScore');
+    const go = document.getElementById('snakeGameOver');
+    if (fs) fs.textContent = sGame.score;
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD : ' + getBestScore('snake');
+    }
+    if (go) go.classList.add('active');
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(sGame.score), 1200);
+    }
 }
 
 function sUpdate() {
@@ -162,6 +194,7 @@ function sDraw() {
     }
     if (!sGame.running && !sGame.gameOver) return;
     
+    // Pomme
     const ax = sApple.x * sGridSize;
     const ay = sApple.y * sGridSize;
     const ps = sGridSize / 9;
@@ -182,6 +215,7 @@ function sDraw() {
     }
     sCtx.restore();
     
+    // Serpent
     for (let i = sSnake.length - 1; i >= 0; i--) {
         const seg = sSnake[i];
         const isHead = i === 0;
@@ -208,12 +242,14 @@ function sDraw() {
         sCtx.fillRect(bx + 2, by + 2, 2, sGridSize - 4);
         sCtx.fillRect(bx + sGridSize - 4, by + 2, 2, sGridSize - 4);
         sCtx.restore();
+        
         if (!isHead && !isTail) {
             sCtx.save();
             sCtx.fillStyle = 'rgba(0, 60, 40, 0.5)';
             sCtx.fillRect(bx + sGridSize / 2 - 2, by + sGridSize / 2 - 2, 4, 4);
             sCtx.restore();
         }
+        
         if (isHead) {
             const dir = sDir;
             const eyeSize = 4;
@@ -238,6 +274,7 @@ function sDraw() {
             else sCtx.fillRect(bx + sGridSize / 2 - 1, by + sGridSize - 2, 2, 4);
         }
     }
+    
     if (sGame.paused && sGame.running) {
         sCtx.save();
         sCtx.fillStyle = 'rgba(10, 10, 30, 0.7)';
