@@ -117,7 +117,6 @@ function toggleFullscreen(btn) {
     }
 }
 
-// Initialisation de la modale
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('settingsModal');
     if (modal) {
