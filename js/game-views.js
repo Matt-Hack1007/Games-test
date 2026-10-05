@@ -1,0 +1,135 @@
+// ============================================
+// 🎮 VUES DE JEU (générées dynamiquement)
+// ============================================
+function createGameView(gameId, hudConfig, controlsText, options = {}) {
+    const container = document.getElementById('gameViewsContainer');
+    
+    const view = document.createElement('div');
+    view.className = 'game-view';
+    view.id = `${gameId}GameView`;
+    
+    const canvasId = `${gameId}Canvas`;
+    
+    view.innerHTML = `
+        <canvas id="${canvasId}"></canvas>
+        <div class="game-hud">
+            ${hudConfig.score ? `<div class="game-hud-score">SCORE : <span id="${gameId}Score">0</span></div>` : ''}
+            ${hudConfig.level ? `<div class="game-hud-level">${hudConfig.levelText || 'NIVEAU'} <span id="${gameId}Level">1</span></div>` : ''}
+            ${hudConfig.lives ? `<div class="game-hud-lives">${hudConfig.livesText || 'VIES'} : <span id="${gameId}Lives">♥♥♥</span></div>` : ''}
+        </div>
+        <div class="game-controls">${controlsText}</div>
+        <div class="start-game-message" id="${gameId}StartMsg">APPUIE SUR ESPACE POUR COMMENCER</div>
+        <div class="game-over-overlay" id="${gameId}GameOver">
+            <div class="game-over-title" id="${gameId}GameOverTitle">GAME OVER</div>
+            <div class="game-over-score">SCORE FINAL : <span id="${gameId}FinalScore">0</span></div>
+            <div class="game-over-best" id="${gameId}BestScore"></div>
+            <div class="game-over-buttons">
+                <button class="btn-start" onclick="restartGame('${gameId}')">REJOUER</button>
+                <button class="btn-back" onclick="quitToMenu('${gameId}')">MENU</button>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(view);
+}
+
+// Création de toutes les vues de jeu
+function createAllGameViews() {
+    createGameView('asteroids',
+        { score: true, level: true, lives: true },
+        `<span>↑</span> PROPULSION | <span>← →</span> ROTATION | <span>ESPACE</span> TIR | <span>↓</span> HYPERESPACE | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    createGameView('paddle',
+        { score: true, level: true, lives: true },
+        `<span>← →</span> DÉPLACER | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    // Tennis : HUD spécial
+    const tennisContainer = document.getElementById('gameViewsContainer');
+    const tennisView = document.createElement('div');
+    tennisView.className = 'game-view';
+    tennisView.id = 'tennisGameView';
+    tennisView.innerHTML = `
+        <canvas id="tennisCanvas"></canvas>
+        <div class="game-hud">
+            <div class="game-hud-score">J1 : <span id="tennisScore1">0</span></div>
+            <div class="game-hud-level">PREMIER À <span id="tennisTarget">5</span></div>
+            <div class="game-hud-lives">J2 : <span id="tennisScore2">0</span></div>
+        </div>
+        <div class="game-controls" id="tennisControls">
+            <span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER
+        </div>
+        <div class="start-game-message" id="tennisStartMsg">APPUIE SUR ESPACE POUR COMMENCER</div>
+        <div class="game-over-overlay" id="tennisGameOver">
+            <div class="game-over-title" id="tennisGameOverTitle">VICTOIRE !</div>
+            <div class="game-over-score">SCORE : <span id="tennisFinalScore">0 - 0</span></div>
+            <div class="game-over-best" id="tennisBestScore"></div>
+            <div class="game-over-buttons">
+                <button class="btn-start" onclick="restartGame('tennis')">REJOUER</button>
+                <button class="btn-back" onclick="quitToMenu('tennis')">MENU</button>
+            </div>
+        </div>
+    `;
+    tennisContainer.appendChild(tennisView);
+    
+    createGameView('invaders',
+        { score: true, level: true, lives: true, levelText: 'VAGUE' },
+        `<span>← →</span> DÉPLACER | <span>ESPACE</span> TIRER | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    createGameView('snake',
+        { score: true, level: true, livesText: 'LONGUEUR' },
+        `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    createGameView('tetris',
+        { score: true, level: true, livesText: 'LIGNES' },
+        `<span>← →</span> DÉPLACER | <span>↑</span> ROTATION | <span>↓</span> DESCENDRE | <span>ESPACE</span> CHUTE | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    createGameView('flappy',
+        { score: true, level: true, livesText: 'MEILLEUR' },
+        `<span>ESPACE</span> ou <span>CLIC</span> VOLER | <span>ÉCHAP</span> QUITTER`
+    );
+    
+    createGameView('pacman',
+        { score: true, level: true, lives: true },
+        `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
+    );
+}
+
+// ============================================
+// 🎯 LANCEUR GLOBAL
+// ============================================
+function startGame(gameId) {
+    switch (gameId) {
+        case 'asteroids': startAsteroidsGame(); break;
+        case 'paddle': startPaddleGame(); break;
+        case 'tennis': startTennisGame(); break;
+        case 'invaders': startInvadersGame(); break;
+        case 'snake': startSnakeGame(); break;
+        case 'tetris': startTetrisGame(); break;
+        case 'flappy': startFlappyGame(); break;
+        case 'pacman': startPacmanGame(); break;
+    }
+}
+
+function restartGame(gameId) {
+    const map = {
+        asteroids: 'asteroidsGameOver', paddle: 'paddleGameOver', tennis: 'tennisGameOver',
+        invaders: 'invadersGameOver', snake: 'snakeGameOver', tetris: 'tetrisGameOver',
+        flappy: 'flappyGameOver', pacman: 'pacmanGameOver'
+    };
+    document.getElementById(map[gameId]).classList.remove('active');
+    startGame(gameId);
+}
+
+function quitToMenu(gameId) {
+    const fnMap = {
+        asteroids: quitToAsteroidsMenu, paddle: quitToPaddleMenu, tennis: quitToTennisMenu,
+        invaders: quitToInvadersMenu, snake: quitToSnakeMenu, tetris: quitToTetrisMenu,
+        flappy: quitToFlappyMenu, pacman: quitToPacmanMenu
+    };
+    if (fnMap[gameId]) fnMap[gameId]();
+}
