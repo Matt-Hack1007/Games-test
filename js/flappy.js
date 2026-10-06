@@ -1,5 +1,5 @@
 // ============================================
-// 🐦 FLAPPY (corrigé + tactile)
+// 🐦 FLAPPY
 // ============================================
 var fCanvas, fCtx, fW, fH;
 var fSettings, fGame, fKeys, fBird;
@@ -20,22 +20,37 @@ function initFlappy() {
         return;
     }
     fCtx = fCanvas.getContext('2d');
-    
     fSettings = flappyDiffSettings.normal;
     fGame = { score: 0, level: 1, best: 0, running: false, gameOver: false };
     fKeys = { Space: false };
     fBird = { x: 0, y: 0, vy: 0, width: 34, height: 24, rotation: 0 };
     fPipes = []; fParticles = [];
     fGroundOffset = 0;
-    
     fResize();
+    if (typeof onResize === 'function') {
+        onResize(() => {
+            if (fCanvas && document.getElementById('flappyGameView')?.classList.contains('active')) {
+                fResize();
+                if (fBird) {
+                    fBird.x = fW * 0.25;
+                    fBird.y = fH / 2;
+                }
+            }
+        });
+    }
     console.log('✅ Flappy initialisé');
 }
 
 function fResize() {
     if (!fCanvas) return;
-    fW = fCanvas.width = window.innerWidth;
-    fH = fCanvas.height = window.innerHeight;
+    if (typeof resizeCanvas === 'function') {
+        const size = resizeCanvas(fCanvas, fCtx);
+        fW = size.width;
+        fH = size.height;
+    } else {
+        fW = fCanvas.width = window.visualViewport?.width || window.innerWidth;
+        fH = fCanvas.height = window.visualViewport?.height || window.innerHeight;
+    }
 }
 
 function fInit() {
@@ -85,22 +100,18 @@ function startFlappyGame() {
     if (gv) gv.classList.add('active');
     fGame.running = false;
     fGame.gameOver = false;
-    const msg = document.getElementById('flappyStartMsg');
-    if (msg) msg.classList.add('active');
     const go = document.getElementById('flappyGameOver');
     if (go) go.classList.remove('active');
-    fResize();
-    fInit();
-    if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
-    fRenderLoop();
-}
-
-function fStartGame() {
-    const msg = document.getElementById('flappyStartMsg');
-    if (msg) msg.classList.remove('active');
-    fInit();
-    fGame.running = true;
-    fJump();
+    setTimeout(() => {
+        fResize();
+        fInit();
+        if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
+        fRenderLoop();
+        showCountdown('flappy', () => {
+            fGame.running = true;
+            fJump();
+        });
+    }, 50);
 }
 
 function quitToFlappyMenu() {
@@ -108,8 +119,6 @@ function quitToFlappyMenu() {
     fGame.gameOver = false;
     if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
     fGameLoopId = null;
-    const msg = document.getElementById('flappyStartMsg');
-    if (msg) msg.classList.remove('active');
     const go = document.getElementById('flappyGameOver');
     if (go) go.classList.remove('active');
     const gv = document.getElementById('flappyGameView');
@@ -142,14 +151,12 @@ function fUpdate() {
     fBird.y += fBird.vy;
     fBird.rotation = Math.max(-0.5, Math.min(Math.PI / 2, fBird.vy * 0.08));
     fGroundOffset = (fGroundOffset + fSettings.pipeSpeed) % 40;
-    
     if (fBird.y + fBird.height >= fH - 60) {
         fBird.y = fH - 60 - fBird.height;
         fEndGame();
         return;
     }
     if (fBird.y < 0) { fBird.y = 0; fBird.vy = 0; }
-    
     for (let i = fPipes.length - 1; i >= 0; i--) {
         const p = fPipes[i];
         p.x -= fSettings.pipeSpeed;
@@ -172,10 +179,8 @@ function fUpdate() {
         }
         if (p.x + p.width < -50) fPipes.splice(i, 1);
     }
-    
     const lastPipe = fPipes[fPipes.length - 1];
     if (lastPipe && lastPipe.x < fW - fSettings.pipeSpacing) fSpawnPipe(fW + 20);
-    
     for (let i = fParticles.length - 1; i >= 0; i--) {
         const p = fParticles[i];
         p.x += p.vx; p.y += p.vy;
@@ -190,39 +195,27 @@ function fEndGame() {
     fGame.gameOver = true;
     playExplosion();
     setTimeout(playGameOver, 300);
-    
     const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('flappy', fGame.score) : false;
     const fs = document.getElementById('flappyFinalScore');
     const bs = document.getElementById('flappyBestScore');
     const go = document.getElementById('flappyGameOver');
     if (fs) fs.textContent = fGame.score;
-    if (bs && typeof getBestScore === 'function') {
-        bs.textContent = '🏆 RECORD : ' + getBestScore('flappy');
-    }
+    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('flappy');
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') {
-        setTimeout(() => showNewRecordPopup(fGame.score), 1200);
-    }
+    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(fGame.score), 1200);
 }
 
 function fDraw() {
     if (!fCtx) return;
-    
     const grad = fCtx.createLinearGradient(0, 0, 0, fH);
     grad.addColorStop(0, '#0a0a1e');
     grad.addColorStop(1, '#1a1a3e');
     fCtx.fillStyle = grad;
     fCtx.fillRect(0, 0, fW, fH);
-    
     fCtx.strokeStyle = 'rgba(0, 255, 255, 0.06)';
     fCtx.lineWidth = 1;
-    for (let x = 0; x < fW; x += 40) {
-        fCtx.beginPath(); fCtx.moveTo(x, 0); fCtx.lineTo(x, fH); fCtx.stroke();
-    }
-    for (let y = 0; y < fH; y += 40) {
-        fCtx.beginPath(); fCtx.moveTo(0, y); fCtx.lineTo(fW, y); fCtx.stroke();
-    }
-    
+    for (let x = 0; x < fW; x += 40) { fCtx.beginPath(); fCtx.moveTo(x, 0); fCtx.lineTo(x, fH); fCtx.stroke(); }
+    for (let y = 0; y < fH; y += 40) { fCtx.beginPath(); fCtx.moveTo(0, y); fCtx.lineTo(fW, y); fCtx.stroke(); }
     for (const p of fPipes) {
         fCtx.save();
         fCtx.shadowColor = '#00ff88'; fCtx.shadowBlur = 12;
@@ -237,7 +230,6 @@ function fDraw() {
         fCtx.fillRect(p.x, p.bottomY, 6, fH - p.bottomY);
         fCtx.restore();
     }
-    
     fCtx.save();
     fCtx.fillStyle = '#1a1a3e';
     fCtx.fillRect(0, fH - 60, fW, 60);
@@ -249,7 +241,6 @@ function fDraw() {
     fCtx.lineTo(fW, fH - 60);
     fCtx.stroke();
     fCtx.restore();
-    
     for (const p of fParticles) {
         const alpha = p.life / p.maxLife;
         fCtx.save();
@@ -259,9 +250,6 @@ function fDraw() {
         fCtx.fillRect(p.x - 2, p.y - 2, 4, 4);
         fCtx.restore();
     }
-    
-    if (!fGame.running && !fGame.gameOver) return;
-    
     fCtx.save();
     fCtx.translate(fBird.x + fBird.width / 2, fBird.y + fBird.height / 2);
     fCtx.rotate(fBird.rotation);

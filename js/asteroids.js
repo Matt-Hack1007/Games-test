@@ -1,5 +1,5 @@
 // ============================================
-// ☄ ASTEROIDS (corrigé + tactile)
+// ☄ ASTEROIDS
 // ============================================
 var aCanvas, aCtx, aW, aH;
 var aSettings, aGame, aKeys, aShip;
@@ -19,21 +19,32 @@ function initAsteroids() {
         return;
     }
     aCtx = aCanvas.getContext('2d');
-    
     aSettings = asteroidsDiffSettings.normal;
     aGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false };
     aKeys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, Space: false };
     aShip = { x: 0, y: 0, vx: 0, vy: 0, angle: -Math.PI/2, radius: 14, thrusting: false, invulnerable: 0, hyperCooldown: 0 };
     aAsteroids = []; aBullets = []; aParticles = [];
-    
     aResize();
+    if (typeof onResize === 'function') {
+        onResize(() => {
+            if (aCanvas && document.getElementById('asteroidsGameView')?.classList.contains('active')) {
+                aResize();
+            }
+        });
+    }
     console.log('✅ Asteroids initialisé');
 }
 
 function aResize() {
     if (!aCanvas) return;
-    aW = aCanvas.width = window.innerWidth;
-    aH = aCanvas.height = window.innerHeight;
+    if (typeof resizeCanvas === 'function') {
+        const size = resizeCanvas(aCanvas, aCtx);
+        aW = size.width;
+        aH = size.height;
+    } else {
+        aW = aCanvas.width = window.visualViewport?.width || window.innerWidth;
+        aH = aCanvas.height = window.visualViewport?.height || window.innerHeight;
+    }
 }
 
 function aCreateAsteroid(x, y, size = 3) {
@@ -87,22 +98,17 @@ function startAsteroidsGame() {
     if (gv) gv.classList.add('active');
     aGame.running = false;
     aGame.gameOver = false;
-    const msg = document.getElementById('asteroidsStartMsg');
-    if (msg) msg.classList.add('active');
     const go = document.getElementById('asteroidsGameOver');
     if (go) go.classList.remove('active');
-    aResize();
-    aInit();
-    if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
-    aRenderLoop();
-}
-
-function aStartGame() {
-    const msg = document.getElementById('asteroidsStartMsg');
-    if (msg) msg.classList.remove('active');
-    aInit();
-    aGame.running = true;
-    playBeep(880, 0.1);
+    setTimeout(() => {
+        aResize();
+        aInit();
+        if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
+        aRenderLoop();
+        showCountdown('asteroids', () => {
+            aGame.running = true;
+        });
+    }, 50);
 }
 
 function quitToAsteroidsMenu() {
@@ -111,8 +117,6 @@ function quitToAsteroidsMenu() {
     stopThrustSound();
     if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
     aGameLoopId = null;
-    const msg = document.getElementById('asteroidsStartMsg');
-    if (msg) msg.classList.remove('active');
     const go = document.getElementById('asteroidsGameOver');
     if (go) go.classList.remove('active');
     const gv = document.getElementById('asteroidsGameView');
@@ -131,6 +135,7 @@ function aHyperSpace() {
 
 function aShoot() {
     if (aBullets.length >= aSettings.maxBullets) return;
+    if (!aGame.running) return;
     playShoot();
     aBullets.push({
         x: aShip.x + Math.cos(aShip.angle) * aShip.radius,
@@ -196,19 +201,14 @@ function aEndGame() {
     aGame.gameOver = true;
     stopThrustSound();
     playGameOver();
-    
     const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('asteroids', aGame.score) : false;
     const fs = document.getElementById('asteroidsFinalScore');
     const bs = document.getElementById('asteroidsBestScore');
     const go = document.getElementById('asteroidsGameOver');
     if (fs) fs.textContent = aGame.score;
-    if (bs && typeof getBestScore === 'function') {
-        bs.textContent = '🏆 RECORD : ' + getBestScore('asteroids');
-    }
+    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('asteroids');
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') {
-        setTimeout(() => showNewRecordPopup(aGame.score), 800);
-    }
+    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(aGame.score), 800);
 }
 
 function aUpdate() {
@@ -348,7 +348,6 @@ function aRender() {
     aCtx.lineWidth = 1;
     for (let x = 0; x < aW; x += 40) { aCtx.beginPath(); aCtx.moveTo(x, 0); aCtx.lineTo(x, aH); aCtx.stroke(); }
     for (let y = 0; y < aH; y += 40) { aCtx.beginPath(); aCtx.moveTo(0, y); aCtx.lineTo(aW, y); aCtx.stroke(); }
-    if (!aGame.running && !aGame.gameOver) return;
     aDrawParticles(); aDrawAsteroids(); aDrawBullets(); aDrawShip();
 }
 

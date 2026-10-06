@@ -1,5 +1,5 @@
 // ============================================
-// 🎾 TENNIS (corrigé + tactile)
+// 🎾 TENNIS
 // ============================================
 var tCanvas, tCtx, tW, tH;
 var tSettings, tGame, tKeys, tPaddle1, tPaddle2, tBall;
@@ -19,7 +19,6 @@ function initTennis() {
         return;
     }
     tCtx = tCanvas.getContext('2d');
-    
     tSettings = tennisDiffSettings.normal;
     tGame = { score1: 0, score2: 0, running: false, gameOver: false, serving: true, server: 1 };
     tKeys = { q: false, a: false, ArrowUp: false, ArrowDown: false, p: false, l: false, Space: false };
@@ -27,15 +26,36 @@ function initTennis() {
     tPaddle2 = { x: 0, y: 0, width: 14, height: 100, speed: 11 };
     tBall = { x: 0, y: 0, vx: 0, vy: 0, radius: 8, speed: 8 };
     tParticles = [];
-    
     tResize();
+    if (typeof onResize === 'function') {
+        onResize(() => {
+            if (tCanvas && document.getElementById('tennisGameView')?.classList.contains('active')) {
+                tResize();
+                if (tPaddle1 && tPaddle2) {
+                    tPaddle1.y = tH / 2 - tPaddle1.height / 2;
+                    tPaddle2.x = tW - 30 - tPaddle2.width;
+                    tPaddle2.y = tH / 2 - tPaddle2.height / 2;
+                }
+                if (tGame.serving) {
+                    tBall.x = tW / 2;
+                    tBall.y = tH / 2;
+                }
+            }
+        });
+    }
     console.log('✅ Tennis initialisé');
 }
 
 function tResize() {
     if (!tCanvas) return;
-    tW = tCanvas.width = window.innerWidth;
-    tH = tCanvas.height = window.innerHeight;
+    if (typeof resizeCanvas === 'function') {
+        const size = resizeCanvas(tCanvas, tCtx);
+        tW = size.width;
+        tH = size.height;
+    } else {
+        tW = tCanvas.width = window.visualViewport?.width || window.innerWidth;
+        tH = tCanvas.height = window.visualViewport?.height || window.innerHeight;
+    }
 }
 
 function tInit() {
@@ -85,32 +105,26 @@ function startTennisGame() {
     if (gv) gv.classList.add('active');
     tGame.running = false;
     tGame.gameOver = false;
-    const msg = document.getElementById('tennisStartMsg');
-    if (msg) msg.classList.add('active');
     const go = document.getElementById('tennisGameOver');
     if (go) go.classList.remove('active');
-    
     const controls = document.getElementById('tennisControls');
     if (controls) {
         if (tennisMode === '2p') {
-            controls.innerHTML = `<span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`;
+            controls.innerHTML = `<span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ÉCHAP</span> QUITTER`;
         } else {
-            controls.innerHTML = `<span>↑/↓</span> ou <span>Q/A</span> DÉPLACER | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`;
+            controls.innerHTML = `<span>↑/↓</span> ou <span>Q/A</span> DÉPLACER | <span>ÉCHAP</span> QUITTER`;
         }
     }
-    
-    tResize();
-    tInit();
-    if (tGameLoopId) cancelAnimationFrame(tGameLoopId);
-    tRenderLoop();
-}
-
-function tStartGame() {
-    const msg = document.getElementById('tennisStartMsg');
-    if (msg) msg.classList.remove('active');
-    if (!tGame.serving) return;
-    tLaunchBall();
-    tGame.running = true;
+    setTimeout(() => {
+        tResize();
+        tInit();
+        if (tGameLoopId) cancelAnimationFrame(tGameLoopId);
+        tRenderLoop();
+        showCountdown('tennis', () => {
+            tLaunchBall();
+            tGame.running = true;
+        });
+    }, 50);
 }
 
 function quitToTennisMenu() {
@@ -118,8 +132,6 @@ function quitToTennisMenu() {
     tGame.gameOver = false;
     if (tGameLoopId) cancelAnimationFrame(tGameLoopId);
     tGameLoopId = null;
-    const msg = document.getElementById('tennisStartMsg');
-    if (msg) msg.classList.remove('active');
     const go = document.getElementById('tennisGameOver');
     if (go) go.classList.remove('active');
     const gv = document.getElementById('tennisGameView');
@@ -136,12 +148,10 @@ function tUpdate() {
     }
     tMovePaddle1();
     if (tennisMode === '2p') tMovePaddle2(); else tMoveAI();
-    
     const speed = Math.hypot(tBall.vx, tBall.vy);
     const steps = Math.max(1, Math.ceil(speed / 4));
     const stepX = tBall.vx / steps;
     const stepY = tBall.vy / steps;
-    
     for (let s = 0; s < steps; s++) {
         tBall.x += stepX;
         tBall.y += stepY;
@@ -174,7 +184,6 @@ function tUpdate() {
     }
     if (tBall.x + tBall.radius < 0) tScorePoint(2);
     else if (tBall.x - tBall.radius > tW) tScorePoint(1);
-    
     for (let i = tParticles.length - 1; i >= 0; i--) {
         const p = tParticles[i];
         p.x += p.vx; p.y += p.vy;
@@ -224,15 +233,18 @@ function tScorePoint(player) {
     tGame.server = player === 1 ? 2 : 1;
     tResetBall();
     tGame.running = false;
-    const msg = document.getElementById('tennisStartMsg');
-    if (msg) msg.classList.add('active');
+    setTimeout(() => {
+        showCountdown('tennis', () => {
+            tLaunchBall();
+            tGame.running = true;
+        });
+    }, 500);
 }
 
 function tEndGame() {
     tGame.running = false;
     tGame.gameOver = true;
     playGameOver();
-    
     const title = document.getElementById('tennisGameOverTitle');
     const winner = tGame.score1 >= tSettings.targetScore ? 1 : 2;
     if (title) {
@@ -241,22 +253,16 @@ function tEndGame() {
         if (winner === 1) title.classList.add('win');
         else title.classList.remove('win');
     }
-    
     const isNewRecord = tennisMode === 'ai' && winner === 1 
         ? ((typeof updateRecord === 'function') ? updateRecord('tennis', (getBestScore('tennis') || 0) + 1) : false)
         : false;
-    
     const fs = document.getElementById('tennisFinalScore');
     const bs = document.getElementById('tennisBestScore');
     const go = document.getElementById('tennisGameOver');
     if (fs) fs.textContent = tGame.score1 + ' - ' + tGame.score2;
-    if (bs && typeof getBestScore === 'function') {
-        bs.textContent = '🏆 VICTOIRES : ' + getBestScore('tennis');
-    }
+    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 VICTOIRES : ' + getBestScore('tennis');
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') {
-        setTimeout(() => showNewRecordPopup(getBestScore('tennis')), 800);
-    }
+    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(getBestScore('tennis')), 800);
 }
 
 function tDraw() {
@@ -267,13 +273,11 @@ function tDraw() {
     tCtx.lineWidth = 1;
     for (let x = 0; x < tW; x += 40) { tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, tH); tCtx.stroke(); }
     for (let y = 0; y < tH; y += 40) { tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(tW, y); tCtx.stroke(); }
-    
     tCtx.save();
     tCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
     tCtx.setLineDash([8, 8]);
     tCtx.beginPath(); tCtx.moveTo(tW / 2, 0); tCtx.lineTo(tW / 2, tH); tCtx.stroke();
     tCtx.restore();
-    
     tCtx.save();
     tCtx.font = '48px "Press Start 2P"';
     tCtx.textAlign = 'center';
@@ -284,7 +288,6 @@ function tDraw() {
     tCtx.shadowColor = '#ff00ff';
     tCtx.fillText(tGame.score2, tW * 3 / 4, tH / 2 + 15);
     tCtx.restore();
-    
     for (const p of tParticles) {
         const alpha = p.life / p.maxLife;
         tCtx.save();
@@ -295,19 +298,16 @@ function tDraw() {
         tCtx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
         tCtx.restore();
     }
-    
     tCtx.save();
     tCtx.shadowColor = '#00ffff'; tCtx.shadowBlur = 15;
     tCtx.fillStyle = '#00ffff';
     tCtx.fillRect(tPaddle1.x, tPaddle1.y, tPaddle1.width, tPaddle1.height);
     tCtx.restore();
-    
     tCtx.save();
     tCtx.shadowColor = '#ff00ff'; tCtx.shadowBlur = 15;
     tCtx.fillStyle = '#ff00ff';
     tCtx.fillRect(tPaddle2.x, tPaddle2.y, tPaddle2.width, tPaddle2.height);
     tCtx.restore();
-    
     tCtx.save();
     tCtx.shadowColor = '#ffdd00'; tCtx.shadowBlur = 15;
     tCtx.fillStyle = '#ffdd00';

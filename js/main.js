@@ -25,24 +25,19 @@ function updatePlayingClass() {
         'invadersGameView', 'snakeGameView', 'tetrisGameView',
         'flappyGameView', 'pacmanGameView'
     ];
-    
     const isPlaying = gameViews.some(id => 
         document.getElementById(id)?.classList.contains('active')
     );
-    
     document.body.classList.toggle('playing', isPlaying);
 }
 
-// Observer les changements de classe
 document.addEventListener('DOMContentLoaded', () => {
     const gameViews = [
         'asteroidsGameView', 'paddleGameView', 'tennisGameView',
         'invadersGameView', 'snakeGameView', 'tetrisGameView',
         'flappyGameView', 'pacmanGameView'
     ];
-    
     const observer = new MutationObserver(updatePlayingClass);
-    
     gameViews.forEach(id => {
         const el = document.getElementById(id);
         if (el) {

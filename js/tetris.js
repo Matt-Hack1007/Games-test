@@ -1,5 +1,5 @@
 // ============================================
-// 🧱 TETRIS (corrigé + tactile)
+// 🧱 TETRIS
 // ============================================
 var teCanvas, teCtx, teW, teH, teGridSize = 30, teCols = 10, teRows = 20;
 var teOffsetX = 0, teOffsetY = 0;
@@ -38,21 +38,39 @@ function initTetris() {
         return;
     }
     teCtx = teCanvas.getContext('2d');
-    
     teSettings = tetrisDiffSettings.normal;
     teGame = { score: 0, level: 1, lines: 0, running: false, gameOver: false };
     teKeys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, Space: false };
     teBoard = [];
-    
     teResize();
+    if (typeof onResize === 'function') {
+        onResize(() => {
+            if (teCanvas && document.getElementById('tetrisGameView')?.classList.contains('active')) {
+                teResize();
+            }
+        });
+    }
     console.log('✅ Tetris initialisé');
 }
 
 function teResize() {
     if (!teCanvas) return;
-    teW = teCanvas.width = window.innerWidth;
-    teH = teCanvas.height = window.innerHeight;
-    teGridSize = Math.min(Math.floor(teH / (teRows + 2)), Math.floor(teW / (teCols + 4)));
+    let w, h;
+    if (typeof resizeCanvas === 'function') {
+        const size = resizeCanvas(teCanvas, teCtx);
+        w = size.width;
+        h = size.height;
+    } else {
+        w = teCanvas.width = window.visualViewport?.width || window.innerWidth;
+        h = teCanvas.height = window.visualViewport?.height || window.innerHeight;
+    }
+    teW = w;
+    teH = h;
+    if (teW > teH) {
+        teGridSize = Math.min(Math.floor(teH / (teRows + 2)), Math.floor(teW / (teCols + 8)));
+    } else {
+        teGridSize = Math.min(Math.floor(teW / (teCols + 2)), Math.floor(teH / (teRows + 4)));
+    }
     teOffsetX = (teW - teCols * teGridSize) / 2;
     teOffsetY = (teH - teRows * teGridSize) / 2;
 }
@@ -100,22 +118,17 @@ function startTetrisGame() {
     if (gv) gv.classList.add('active');
     teGame.running = false;
     teGame.gameOver = false;
-    const msg = document.getElementById('tetrisStartMsg');
-    if (msg) msg.classList.add('active');
     const go = document.getElementById('tetrisGameOver');
     if (go) go.classList.remove('active');
-    teResize();
-    teInit();
-    if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
-    teRenderLoop();
-}
-
-function teStartGame() {
-    const msg = document.getElementById('tetrisStartMsg');
-    if (msg) msg.classList.remove('active');
-    teInit();
-    teGame.running = true;
-    playBeep(880, 0.1);
+    setTimeout(() => {
+        teResize();
+        teInit();
+        if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
+        teRenderLoop();
+        showCountdown('tetris', () => {
+            teGame.running = true;
+        });
+    }, 50);
 }
 
 function quitToTetrisMenu() {
@@ -123,8 +136,6 @@ function quitToTetrisMenu() {
     teGame.gameOver = false;
     if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
     teGameLoopId = null;
-    const msg = document.getElementById('tetrisStartMsg');
-    if (msg) msg.classList.remove('active');
     const go = document.getElementById('tetrisGameOver');
     if (go) go.classList.remove('active');
     const gv = document.getElementById('tetrisGameView');
@@ -206,7 +217,6 @@ function teClearLines() {
         teGame.level = 1 + Math.floor(teGame.lines / 10);
         teUpdateHUD();
         playPickup();
-        
         if (teGame.level > 0 && teGame.level % 5 === 0 && !teSpecialPatternShown) {
             const pattern = SPECIAL_PATTERNS[Math.floor(Math.random() * SPECIAL_PATTERNS.length)];
             const startRow = Math.floor((teRows - pattern.rows.length) / 2);
@@ -230,19 +240,14 @@ function teEndGame() {
     teGame.running = false;
     teGame.gameOver = true;
     playGameOver();
-    
     const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('tetris', teGame.score) : false;
     const fs = document.getElementById('tetrisFinalScore');
     const bs = document.getElementById('tetrisBestScore');
     const go = document.getElementById('tetrisGameOver');
     if (fs) fs.textContent = teGame.score;
-    if (bs && typeof getBestScore === 'function') {
-        bs.textContent = '🏆 RECORD : ' + getBestScore('tetris');
-    }
+    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('tetris');
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') {
-        setTimeout(() => showNewRecordPopup(teGame.score), 800);
-    }
+    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(teGame.score), 800);
 }
 
 function teUpdate() {
@@ -264,14 +269,12 @@ function teDraw() {
     if (!teCtx) return;
     teCtx.fillStyle = '#0a0a1e';
     teCtx.fillRect(0, 0, teW, teH);
-    
     teCtx.save();
     teCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
     teCtx.lineWidth = 2;
     teCtx.shadowColor = '#00ffff'; teCtx.shadowBlur = 10;
     teCtx.strokeRect(teOffsetX, teOffsetY, teCols * teGridSize, teRows * teGridSize);
     teCtx.restore();
-    
     teCtx.strokeStyle = 'rgba(0, 255, 255, 0.06)';
     teCtx.lineWidth = 1;
     for (let i = 0; i <= teCols; i++) {
@@ -286,9 +289,6 @@ function teDraw() {
         teCtx.lineTo(teOffsetX + teCols * teGridSize, teOffsetY + i * teGridSize);
         teCtx.stroke();
     }
-    
-    if (!teGame.running && !teGame.gameOver) return;
-    
     for (let r = 0; r < teRows; r++) {
         for (let c = 0; c < teCols; c++) {
             if (teBoard[r][c]) {
@@ -300,8 +300,7 @@ function teDraw() {
             }
         }
     }
-    
-    if (teCurrent) {
+    if (teCurrent && teGame.running) {
         for (let r = 0; r < teCurrent.shape.length; r++) {
             for (let c = 0; c < teCurrent.shape[r].length; c++) {
                 if (teCurrent.shape[r][c]) {

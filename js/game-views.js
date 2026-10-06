@@ -1,10 +1,11 @@
 // ============================================
 // 🎮 VUES DE JEU (générées dynamiquement)
 // ============================================
+
 function createGameView(gameId, hudConfig, controlsText) {
     const container = document.getElementById('gameViewsContainer');
     if (!container) {
-        console.error('gameViewsContainer introuvable !');
+        console.error('❌ gameViewsContainer introuvable !');
         return;
     }
     
@@ -23,7 +24,7 @@ function createGameView(gameId, hudConfig, controlsText) {
             ${hudHtml}
         </div>
         <div class="game-controls">${controlsText}</div>
-        <div class="start-game-message" id="${gameId}StartMsg">APPUIE SUR ESPACE POUR COMMENCER</div>
+        <div class="game-countdown" id="${gameId}Countdown"></div>
         <div class="game-over-overlay" id="${gameId}GameOver">
             <div class="game-over-title" id="${gameId}GameOverTitle">GAME OVER</div>
             <div class="game-over-score">SCORE FINAL : <span id="${gameId}FinalScore">0</span></div>
@@ -41,7 +42,7 @@ function createGameView(gameId, hudConfig, controlsText) {
 function createAllGameViews() {
     const container = document.getElementById('gameViewsContainer');
     if (!container) {
-        console.error('gameViewsContainer manquant dans le HTML !');
+        console.error('❌ gameViewsContainer manquant dans le HTML !');
         return;
     }
     
@@ -57,7 +58,7 @@ function createAllGameViews() {
         `<span>← →</span> DÉPLACER | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`
     );
     
-    // TENNIS
+    // TENNIS (HUD spécial)
     const tennisView = document.createElement('div');
     tennisView.className = 'game-view';
     tennisView.id = 'tennisGameView';
@@ -71,7 +72,7 @@ function createAllGameViews() {
         <div class="game-controls" id="tennisControls">
             <span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER
         </div>
-        <div class="start-game-message" id="tennisStartMsg">APPUIE SUR ESPACE POUR COMMENCER</div>
+        <div class="game-countdown" id="tennisCountdown"></div>
         <div class="game-over-overlay" id="tennisGameOver">
             <div class="game-over-title" id="tennisGameOverTitle">VICTOIRE !</div>
             <div class="game-over-score">SCORE : <span id="tennisFinalScore">0 - 0</span></div>
@@ -159,4 +160,57 @@ function quitToMenu(gameId) {
         pacman: quitToPacmanMenu
     };
     if (fnMap[gameId]) fnMap[gameId]();
+}
+
+// ============================================
+// ⏱ COMPTE À REBOURS (3, 2, 1, GO!)
+// ============================================
+function showCountdown(gameId, callback) {
+    const el = document.getElementById(`${gameId}Countdown`);
+    if (!el) {
+        // Pas d'élément countdown → appeler directement
+        if (callback) callback();
+        return;
+    }
+    
+    el.classList.add('active');
+    
+    let count = 3;
+    el.textContent = count;
+    playBeep(400, 0.15, 'square', 0.15);
+    vibrate(30);
+    
+    const interval = setInterval(() => {
+        count--;
+        
+        if (count > 0) {
+            el.textContent = count;
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+            playBeep(400, 0.15, 'square', 0.15);
+            vibrate(30);
+        } else if (count === 0) {
+            el.textContent = 'GO !';
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+            playBeep(800, 0.3, 'square', 0.2);
+            vibrate(60);
+        } else {
+            clearInterval(interval);
+            el.classList.remove('active');
+            el.classList.remove('pop');
+            if (callback) callback();
+        }
+    }, 800);
+}
+
+// Fonction vibrate (fallback si pas chargée)
+if (typeof vibrate !== 'function') {
+    window.vibrate = function(duration) {
+        if (navigator.vibrate && typeof IS_TOUCH !== 'undefined' && IS_TOUCH) {
+            try { navigator.vibrate(duration); } catch (e) {}
+        }
+    };
 }

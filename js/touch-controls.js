@@ -1,5 +1,5 @@
 // ============================================
-// 📱 CONTRÔLES TACTILES + DÉMARRAGE PAR TAP
+// 📱 CONTRÔLES TACTILES
 // ============================================
 var touchState = {
     up: false, down: false, left: false, right: false,
@@ -26,78 +26,10 @@ function createTouchControls() {
     document.body.appendChild(container);
     
     setupTouchEvents();
-    setupTapToStart();
     
     console.log('📱 Contrôles tactiles créés');
 }
 
-// ============================================
-// 👆 TAP N'IMPORTE OÙ POUR DÉMARRER
-// ============================================
-function setupTapToStart() {
-    document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.touch-dpad')) return;
-        if (e.target.closest('.btn-start')) return;
-        if (e.target.closest('.btn-back')) return;
-        if (e.target.closest('.btn-records')) return;
-        if (e.target.closest('.btn-settings')) return;
-        if (e.target.closest('.btn-reset')) return;
-        if (e.target.closest('.toggle')) return;
-        if (e.target.closest('.color-btn')) return;
-        if (e.target.closest('.editor-cell')) return;
-        if (e.target.closest('.rubrique-header')) return;
-        if (e.target.closest('.difficulty-btn')) return;
-        if (e.target.closest('.game-card')) return;
-        if (e.target.closest('.game-over-buttons')) return;
-        if (e.target.closest('.modal-overlay')) return;
-        if (e.target.closest('.view')) return;
-        
-        handleGlobalTap();
-    }, { passive: true });
-}
-
-function handleGlobalTap() {
-    if (document.getElementById('pacmanGameView')?.classList.contains('active')) {
-        if (!pacGame.running && !pacGame.gameOver) pacStartGame();
-        return;
-    }
-    if (document.getElementById('snakeGameView')?.classList.contains('active')) {
-        if (!sGame.running && !sGame.gameOver) sStartGame();
-        return;
-    }
-    if (document.getElementById('tetrisGameView')?.classList.contains('active')) {
-        if (!teGame.running && !teGame.gameOver) teStartGame();
-        return;
-    }
-    if (document.getElementById('invadersGameView')?.classList.contains('active')) {
-        if (!iGame.running && !iGame.gameOver) iStartGame();
-        return;
-    }
-    if (document.getElementById('asteroidsGameView')?.classList.contains('active')) {
-        if (!aGame.running && !aGame.gameOver) aStartGame();
-        return;
-    }
-    if (document.getElementById('paddleGameView')?.classList.contains('active')) {
-        if (!pGame.running && !pGame.gameOver && pBall.stuck) pStartGame();
-        return;
-    }
-    if (document.getElementById('tennisGameView')?.classList.contains('active')) {
-        if (!tGame.running && !tGame.gameOver && tGame.serving) tStartGame();
-        return;
-    }
-    if (document.getElementById('flappyGameView')?.classList.contains('active')) {
-        if (!fGame.running && !fGame.gameOver) {
-            fStartGame();
-        } else if (fGame.running) {
-            fJump();
-        }
-        return;
-    }
-}
-
-// ============================================
-// 🎯 ÉVÉNEMENTS DES BOUTONS D-PAD
-// ============================================
 function setupTouchEvents() {
     const buttons = document.querySelectorAll('.touch-btn');
     
@@ -140,7 +72,6 @@ function handleTouchAction(dir, pressed) {
     // 🟡 PAC-MAN
     if (document.getElementById('pacmanGameView')?.classList.contains('active')) {
         if (!pressed) return;
-        if (!pacGame.running && !pacGame.gameOver) { pacStartGame(); return; }
         if (dir === 'action') { pacGame.paused = !pacGame.paused; return; }
         if (dir === 'up')    pacPlayer.nextDir = { ...DIR_UP };
         if (dir === 'down')  pacPlayer.nextDir = { ...DIR_DOWN };
@@ -151,7 +82,6 @@ function handleTouchAction(dir, pressed) {
     // 🐍 SNAKE
     else if (document.getElementById('snakeGameView')?.classList.contains('active')) {
         if (!pressed) return;
-        if (!sGame.running && !sGame.gameOver) { sStartGame(); return; }
         if (dir === 'action') { sGame.paused = !sGame.paused; return; }
         if (dir === 'up'    && sDir.y !== 1)  sNextDir = { x: 0, y: -1 };
         if (dir === 'down'  && sDir.y !== -1) sNextDir = { x: 0, y: 1 };
@@ -162,7 +92,6 @@ function handleTouchAction(dir, pressed) {
     // 🧱 TETRIS
     else if (document.getElementById('tetrisGameView')?.classList.contains('active')) {
         if (!pressed) return;
-        if (!teGame.running && !teGame.gameOver) { teStartGame(); return; }
         if (!teGame.running) return;
         if (dir === 'up')    teRotate();
         if (dir === 'down')  teDrop();
@@ -179,8 +108,7 @@ function handleTouchAction(dir, pressed) {
             return;
         }
         if (pressed && dir === 'action') {
-            if (!iGame.running && !iGame.gameOver) iStartGame();
-            else iShoot();
+            iShoot();
             return;
         }
         if (!iGame.running) return;
@@ -191,8 +119,7 @@ function handleTouchAction(dir, pressed) {
     // ☄ ASTEROIDS
     else if (document.getElementById('asteroidsGameView')?.classList.contains('active')) {
         if (pressed && dir === 'action') {
-            if (!aGame.running && !aGame.gameOver) aStartGame();
-            else aShoot();
+            aShoot();
             return;
         }
         if (!aGame.running) return;
@@ -204,10 +131,7 @@ function handleTouchAction(dir, pressed) {
     
     // 🏓 PADDLE
     else if (document.getElementById('paddleGameView')?.classList.contains('active')) {
-        if (pressed && dir === 'action') {
-            if (!pGame.running && !pGame.gameOver && pBall.stuck) pStartGame();
-            return;
-        }
+        if (pressed && dir === 'action') return;
         if (!pGame.running) return;
         if (dir === 'left')  pKeys.ArrowLeft = pressed;
         if (dir === 'right') pKeys.ArrowRight = pressed;
@@ -215,10 +139,7 @@ function handleTouchAction(dir, pressed) {
     
     // 🎾 TENNIS
     else if (document.getElementById('tennisGameView')?.classList.contains('active')) {
-        if (pressed && dir === 'action') {
-            if (!tGame.running && !tGame.gameOver && tGame.serving) tStartGame();
-            return;
-        }
+        if (pressed && dir === 'action') return;
         if (!tGame.running) return;
         if (dir === 'up')   tKeys.ArrowUp = pressed;
         if (dir === 'down') tKeys.ArrowDown = pressed;
@@ -227,11 +148,7 @@ function handleTouchAction(dir, pressed) {
     // 🐦 FLAPPY
     else if (document.getElementById('flappyGameView')?.classList.contains('active')) {
         if (!pressed || dir !== 'action') return;
-        if (!fGame.running && !fGame.gameOver) {
-            fStartGame();
-        } else if (fGame.running) {
-            fJump();
-        }
+        if (fGame.running) fJump();
     }
 }
 

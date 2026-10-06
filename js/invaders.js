@@ -1,5 +1,5 @@
 // ============================================
-// 👾 INVADERS (corrigé + tactile)
+// 👾 INVADERS
 // ============================================
 var iCanvas, iCtx, iW, iH;
 var iSettings, iGame, iKeys, iPlayer;
@@ -25,7 +25,6 @@ function initInvaders() {
         return;
     }
     iCtx = iCanvas.getContext('2d');
-    
     iSettings = invadersDiffSettings.normal;
     iGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false };
     iKeys = { ArrowLeft: false, ArrowRight: false, Space: false };
@@ -33,15 +32,31 @@ function initInvaders() {
     iInvaders = []; iBullets = []; iInvaderBullets = []; iParticles = [];
     iDirection = 1; iSpeedMult = 1; iShootCooldown = 0;
     iUfo = null; iUfoTimer = 0;
-    
     iResize();
+    if (typeof onResize === 'function') {
+        onResize(() => {
+            if (iCanvas && document.getElementById('invadersGameView')?.classList.contains('active')) {
+                iResize();
+                if (iPlayer) {
+                    iPlayer.x = iW / 2 - iPlayer.width / 2;
+                    iPlayer.y = iH - 80;
+                }
+            }
+        });
+    }
     console.log('✅ Invaders initialisé');
 }
 
 function iResize() {
     if (!iCanvas) return;
-    iW = iCanvas.width = window.innerWidth;
-    iH = iCanvas.height = window.innerHeight;
+    if (typeof resizeCanvas === 'function') {
+        const size = resizeCanvas(iCanvas, iCtx);
+        iW = size.width;
+        iH = size.height;
+    } else {
+        iW = iCanvas.width = window.visualViewport?.width || window.innerWidth;
+        iH = iCanvas.height = window.visualViewport?.height || window.innerHeight;
+    }
 }
 
 function iInit() {
@@ -66,7 +81,7 @@ function iSpawnInvaders() {
     const rows = iSettings.rows, cols = iSettings.cols;
     const cw = 50, ch = 44;
     const sx = (iW - cols * cw) / 2;
-    const sy = 100;
+    const sy = Math.max(60, iH * 0.1);
     for (let r = 0; r < rows; r++) {
         let type = r < 1 ? 0 : r < 3 ? 1 : 2;
         const pat = type === 0 ? INVADER_A_PAT : type === 1 ? INVADER_B_PAT : INVADER_C_PAT;
@@ -94,22 +109,17 @@ function startInvadersGame() {
     if (gv) gv.classList.add('active');
     iGame.running = false;
     iGame.gameOver = false;
-    const msg = document.getElementById('invadersStartMsg');
-    if (msg) msg.classList.add('active');
     const go = document.getElementById('invadersGameOver');
     if (go) go.classList.remove('active');
-    iResize();
-    iInit();
-    if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
-    iRenderLoop();
-}
-
-function iStartGame() {
-    const msg = document.getElementById('invadersStartMsg');
-    if (msg) msg.classList.remove('active');
-    iInit();
-    iGame.running = true;
-    playBeep(880, 0.1);
+    setTimeout(() => {
+        iResize();
+        iInit();
+        if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
+        iRenderLoop();
+        showCountdown('invaders', () => {
+            iGame.running = true;
+        });
+    }, 50);
 }
 
 function quitToInvadersMenu() {
@@ -117,8 +127,6 @@ function quitToInvadersMenu() {
     iGame.gameOver = false;
     if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
     iGameLoopId = null;
-    const msg = document.getElementById('invadersStartMsg');
-    if (msg) msg.classList.remove('active');
     const go = document.getElementById('invadersGameOver');
     if (go) go.classList.remove('active');
     const gv = document.getElementById('invadersGameView');
@@ -128,6 +136,7 @@ function quitToInvadersMenu() {
 
 function iShoot() {
     if (iShootCooldown > 0) return;
+    if (!iGame.running) return;
     iShootCooldown = 12;
     playShoot();
     iBullets.push({ x: iPlayer.x + iPlayer.width / 2, y: iPlayer.y, vy: -iSettings.bulletSpeed });
@@ -141,7 +150,6 @@ function iUpdate() {
     if (iPlayer.x < 0) iPlayer.x = 0;
     if (iPlayer.x + iPlayer.width > iW) iPlayer.x = iW - iPlayer.width;
     if (iKeys.Space) iShoot();
-    
     const alive = iInvaders.filter(v => v.alive);
     if (alive.length === 0) {
         iGame.level++;
@@ -152,7 +160,6 @@ function iUpdate() {
         playPickup();
         return;
     }
-    
     const factor = iSpeedMult * (1 + (iSettings.rows * iSettings.cols - alive.length) * 0.02);
     let moveX = iDirection * iSettings.moveSpeed * factor;
     let hitEdge = false;
@@ -166,7 +173,6 @@ function iUpdate() {
     } else {
         for (const inv of alive) inv.x += moveX;
     }
-    
     for (const inv of alive) {
         if (Math.random() < iSettings.fireRate) {
             const col = alive.filter(v => v.col === inv.col);
@@ -174,7 +180,6 @@ function iUpdate() {
             if (bottom === inv) iInvaderBullets.push({ x: inv.x + inv.width / 2, y: inv.y + inv.height, vy: iSettings.bulletSpeed * 0.5 });
         }
     }
-    
     iUfoTimer++;
     if (!iUfo && iUfoTimer > 300 && Math.random() < 0.005) {
         const fromLeft = Math.random() < 0.5;
@@ -187,14 +192,12 @@ function iUpdate() {
         };
         playBeep(1200, 0.15, 'sine', 0.12);
     }
-    
     if (iUfo) {
         iUfo.x += iUfo.vx;
         if (iUfo.x < -100 || iUfo.x > iW + 100) iUfo = null;
         for (let i = iBullets.length - 1; i >= 0; i--) {
             const b = iBullets[i];
-            if (b.x > iUfo.x && b.x < iUfo.x + iUfo.width &&
-                b.y > iUfo.y && b.y < iUfo.y + iUfo.height) {
+            if (b.x > iUfo.x && b.x < iUfo.x + iUfo.width && b.y > iUfo.y && b.y < iUfo.y + iUfo.height) {
                 iBullets.splice(i, 1);
                 iGame.score += iUfo.points;
                 iUpdateHUD();
@@ -216,7 +219,6 @@ function iUpdate() {
             }
         }
     }
-    
     for (let i = iBullets.length - 1; i >= 0; i--) {
         const b = iBullets[i];
         b.y += b.vy;
@@ -235,7 +237,6 @@ function iUpdate() {
             }
         }
     }
-    
     for (let i = iInvaderBullets.length - 1; i >= 0; i--) {
         const b = iInvaderBullets[i];
         b.y += b.vy;
@@ -246,11 +247,9 @@ function iUpdate() {
             return;
         }
     }
-    
     for (const inv of alive) {
         if (inv.y + inv.height >= iPlayer.y) { iDestroyPlayer(); return; }
     }
-    
     for (let i = iParticles.length - 1; i >= 0; i--) {
         const p = iParticles[i];
         p.x += p.vx; p.y += p.vy;
@@ -279,19 +278,14 @@ function iEndGame() {
     iGame.running = false;
     iGame.gameOver = true;
     playGameOver();
-    
     const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('invaders', iGame.score) : false;
     const fs = document.getElementById('invadersFinalScore');
     const bs = document.getElementById('invadersBestScore');
     const go = document.getElementById('invadersGameOver');
     if (fs) fs.textContent = iGame.score;
-    if (bs && typeof getBestScore === 'function') {
-        bs.textContent = '🏆 RECORD : ' + getBestScore('invaders');
-    }
+    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('invaders');
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') {
-        setTimeout(() => showNewRecordPopup(iGame.score), 800);
-    }
+    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(iGame.score), 800);
 }
 
 function iDrawPattern(pattern, x, y, size, color) {
@@ -310,9 +304,6 @@ function iDraw() {
     iCtx.strokeStyle = 'rgba(0, 255, 255, 0.06)';
     for (let x = 0; x < iW; x += 40) { iCtx.beginPath(); iCtx.moveTo(x, 0); iCtx.lineTo(x, iH); iCtx.stroke(); }
     for (let y = 0; y < iH; y += 40) { iCtx.beginPath(); iCtx.moveTo(0, y); iCtx.lineTo(iW, y); iCtx.stroke(); }
-    
-    if (!iGame.running && !iGame.gameOver) return;
-    
     for (const p of iParticles) {
         const alpha = p.life / p.maxLife;
         iCtx.save();
@@ -323,19 +314,16 @@ function iDraw() {
         iCtx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
         iCtx.restore();
     }
-    
     iCtx.save();
     iCtx.shadowColor = '#ffdd00'; iCtx.shadowBlur = 10;
     iCtx.fillStyle = '#ffdd00';
     for (const b of iBullets) iCtx.fillRect(b.x - 2, b.y - 8, 4, 12);
     iCtx.restore();
-    
     iCtx.save();
     iCtx.shadowColor = '#ff3366'; iCtx.shadowBlur = 10;
     iCtx.fillStyle = '#ff3366';
     for (const b of iInvaderBullets) iCtx.fillRect(b.x - 2, b.y, 4, 12);
     iCtx.restore();
-    
     for (const inv of iInvaders) {
         if (!inv.alive) continue;
         iCtx.save();
@@ -346,7 +334,6 @@ function iDraw() {
         iDrawPattern(inv.pattern, inv.x + (inv.width - pw) / 2, inv.y + (inv.height - ph) / 2, px, inv.color);
         iCtx.restore();
     }
-    
     if (iUfo) {
         iCtx.save();
         iCtx.shadowColor = '#ffdd00';
@@ -374,7 +361,6 @@ function iDraw() {
         iCtx.fillText(iUfo.points, iUfo.x + iUfo.width / 2, iUfo.y - 8);
         iCtx.restore();
     }
-    
     iCtx.save();
     iCtx.shadowColor = '#00ff88'; iCtx.shadowBlur = 12;
     iCtx.fillStyle = '#00ff88';
