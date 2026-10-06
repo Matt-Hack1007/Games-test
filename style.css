@@ -1,8 +1,14 @@
 /* ============================================
-   ARCADE.IO - STYLES COMPLETS
+   ARCADE.IO - STYLES COMPLETS (PC + MOBILE + TABLETTE)
    ============================================ */
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+}
 
 body {
     min-height: 100vh;
@@ -16,6 +22,10 @@ body {
     -webkit-font-smoothing: none;
     font-smooth: never;
     padding: 1rem;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 body::before {
@@ -43,6 +53,14 @@ body::after {
     );
     pointer-events: none;
     z-index: 3;
+}
+
+/* Blocage scroll pendant les jeux */
+body.playing {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
 .stars {
@@ -84,7 +102,7 @@ body::after {
     box-shadow: 0 0 8px #ff00ff;
 }
 
-/* ⚠️ CRUCIAL : cache toutes les vues sauf l'active */
+/* ============ VUES ============ */
 .view { display: none; }
 .view.active { 
     display: block; 
@@ -96,6 +114,7 @@ body::after {
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ============ TITRE ============ */
 h1 {
     font-size: 4rem;
     color: #fff;
@@ -121,6 +140,7 @@ h1 {
     }
 }
 
+/* ============ BOUTONS ============ */
 .buttons {
     display: flex;
     flex-direction: column;
@@ -198,6 +218,22 @@ h1 {
 .btn-back:hover { background: #ffdd00; }
 .btn-back:active { transform: translate(5px, 5px); }
 
+.btn-start {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    padding: 1.5rem 4rem;
+    color: #0a0a1e;
+    background: #00ff88;
+    box-shadow: 
+        inset -6px -6px 0 0 #00aa55,
+        inset 6px 6px 0 0 #88ffcc,
+        6px 6px 0 0 #0a0a1e,
+        12px 12px 0 0 #ff00ff;
+}
+.btn-start:hover { background: #ffdd00; }
+.btn-start:active { transform: translate(6px, 6px); }
+
+/* ============ GRILLE DE JEUX ============ */
 .games-title {
     font-size: 2rem;
     color: #fff;
@@ -338,6 +374,7 @@ h1 {
 .game-name { font-size: 0.8rem; letter-spacing: 2px; margin-top: 0.5rem; }
 .game-desc { font-size: 0.5rem; color: #00ffff; letter-spacing: 1px; }
 
+/* ============ MENU DE JEU ============ */
 .game-menu-title {
     font-size: 3rem;
     color: #fff;
@@ -347,6 +384,14 @@ h1 {
     text-shadow: 4px 4px 0 #ff00ff, 8px 8px 0 #00ffff;
 }
 
+.game-menu-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* ============ DIFFICULTÉ ============ */
 .difficulty-under-play {
     max-width: 600px;
     margin: 1.5rem auto 0;
@@ -433,28 +478,6 @@ h1 {
         inset 5px 5px 0 0 #88ffcc,
         5px 5px 0 0 #0a0a1e,
         10px 10px 0 0 #ff00ff;
-}
-
-.btn-start {
-    font-size: 1.5rem;
-    letter-spacing: 3px;
-    padding: 1.5rem 4rem;
-    color: #0a0a1e;
-    background: #00ff88;
-    box-shadow: 
-        inset -6px -6px 0 0 #00aa55,
-        inset 6px 6px 0 0 #88ffcc,
-        6px 6px 0 0 #0a0a1e,
-        12px 12px 0 0 #ff00ff;
-}
-.btn-start:hover { background: #ffdd00; }
-.btn-start:active { transform: translate(6px, 6px); }
-
-.game-menu-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
 }
 
 /* ============ RUBRIQUES DÉROULANTES ============ */
@@ -1067,6 +1090,10 @@ h1 {
     z-index: 5;
     background: #0a0a1e;
     display: none;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 .game-view.active { display: block; }
 
@@ -1077,6 +1104,9 @@ h1 {
     height: 100%;
     background: #0a0a1e;
     image-rendering: pixelated;
+    max-width: 100vw;
+    max-height: 100vh;
+    touch-action: none;
 }
 
 .game-hud {
@@ -1329,55 +1359,367 @@ input[type="range"]::-moz-range-thumb {
 }
 
 body { cursor: crosshair; }
+body.is-touch { cursor: default; }
 
-/* ============ RESPONSIVE MOBILE ============ */
-@media (max-width: 600px) {
-    h1, .game-menu-title { 
+/* ============================================
+   📱 CONTRÔLES TACTILES (mobile/tablette)
+   ============================================ */
+
+.touch-controls {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    pointer-events: none;
+    padding: 0 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Afficher UNIQUEMENT sur mobile/tactile */
+body.is-touch .touch-controls {
+    display: block;
+    opacity: 1;
+}
+
+/* Masquer sur les vues de menu (uniquement en jeu) */
+body.is-touch:not(.playing) .touch-controls {
+    display: none;
+}
+
+/* Cacher sur grands écrans */
+@media (min-width: 1025px) {
+    .touch-controls { display: none !important; }
+}
+
+/* ============================================
+   D-PAD (croix directionnelle)
+   ============================================ */
+.touch-dpad {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.2rem;
+    color: #0a0a1e;
+    background: rgba(0, 255, 255, 0.85);
+    box-shadow: 
+        inset -3px -3px 0 0 rgba(0, 100, 120, 0.5),
+        inset 3px 3px 0 0 rgba(180, 255, 255, 0.8),
+        3px 3px 0 0 #0a0a1e,
+        0 0 15px rgba(0, 255, 255, 0.6);
+    cursor: pointer;
+    transition: transform 0.05s;
+    touch-action: manipulation;
+}
+
+.touch-btn.pressed {
+    transform: scale(0.92);
+    background: #ff00ff;
+    box-shadow: 
+        inset -3px -3px 0 0 rgba(120, 0, 120, 0.5),
+        inset 3px 3px 0 0 rgba(255, 180, 255, 0.8),
+        2px 2px 0 0 #0a0a1e,
+        0 0 20px rgba(255, 0, 255, 0.8);
+    color: #fff;
+}
+
+/* Position des boutons */
+.touch-up     { top: 0;    left: 68px; }
+.touch-left   { top: 68px; left: 0; }
+.touch-center { top: 68px; left: 68px; background: rgba(255, 221, 0, 0.85); }
+.touch-center.pressed { background: #00ff88; color: #0a0a1e; }
+.touch-right  { top: 68px; left: 136px; }
+.touch-down   { top: 136px; left: 68px; }
+
+/* Cache la barre de contrôles clavier sur mobile */
+@media (max-width: 900px) {
+    .game-controls {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   📱 RESPONSIVE MOBILE (portrait)
+   ============================================ */
+@media (max-width: 600px) and (orientation: portrait) {
+    body { padding: 0.5rem; }
+    
+    h1 { 
         font-size: 2rem; 
+        letter-spacing: 2px; 
         margin-bottom: 2rem; 
     }
-    .btn-play, .btn-start { 
-        padding: 1.2rem 2.5rem; 
-        font-size: 1rem; 
+    .game-menu-title { font-size: 1.5rem; letter-spacing: 2px; }
+    
+    .container { padding: 1rem; }
+    
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
     }
-    .btn-records { 
-        padding: 1rem 2rem; 
-        font-size: 0.9rem; 
+    
+    .game-icon { transform: scale(0.7); margin: 8px auto; }
+    .game-name { font-size: 0.6rem; letter-spacing: 1px; }
+    .game-desc { font-size: 0.4rem; }
+    
+    .btn-play, .btn-start { font-size: 1rem; padding: 1rem 2rem; letter-spacing: 2px; }
+    .btn-records { font-size: 0.75rem; padding: 0.8rem 1.5rem; }
+    .btn-settings { font-size: 0.7rem; padding: 0.7rem 1.3rem; }
+    .btn-back { font-size: 0.65rem; padding: 0.7rem 1.3rem; }
+    
+    .difficulty-btn { font-size: 0.6rem; padding: 0.6rem 1rem; letter-spacing: 1px; }
+    
+    /* HUD jeux */
+    .game-hud {
+        top: 10px;
+        left: 10px;
+        right: 10px;
     }
-    .btn-settings { 
-        padding: 1rem 2rem; 
-        font-size: 0.8rem; 
-    }
-    .games-title { 
-        font-size: 1.2rem; 
-        margin-bottom: 2rem; 
-    }
-    .games-grid { 
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
-        gap: 1rem; 
-    }
-    .game-name { font-size: 0.65rem; }
-    .game-desc { font-size: 0.45rem; }
-    .game-icon { transform: scale(0.8); }
-    .difficulty-btn { 
-        padding: 0.8rem 1.2rem; 
-        font-size: 0.7rem; 
-    }
-    .game-hud-score { font-size: 1rem; }
-    .game-hud-lives, .game-hud-level { font-size: 0.8rem; }
-    .game-over-title { font-size: 2rem; }
+    .game-hud-score { font-size: 0.85rem; }
+    .game-hud-lives, .game-hud-level { font-size: 0.65rem; }
+    
+    .start-game-message { font-size: 1rem; padding: 0 1rem; }
+    
+    .game-over-title { font-size: 2rem; letter-spacing: 2px; }
     .game-over-score { font-size: 1rem; }
-    .game-controls { font-size: 0.45rem; }
+    .game-over-best { font-size: 0.75rem; letter-spacing: 1px; }
+    .game-over-buttons { flex-direction: column; gap: 0.8rem; }
+    
     .record-item { padding: 0.8rem 1rem; }
     .record-name { font-size: 0.65rem; }
     .record-score { font-size: 0.8rem; }
+    
     .new-record-text { font-size: 1.2rem; }
+    .new-record-score { font-size: 0.9rem; }
     .new-record-popup { padding: 1.5rem; }
+    
     .editor-grid { padding: 1rem; gap: 3px; }
     .rubrique-header { font-size: 0.7rem; padding: 1rem; }
     .rubrique-desc { font-size: 0.5rem; }
-    .difficulty-under-play .difficulty-btn { 
-        font-size: 0.6rem; 
-        padding: 0.7rem 1rem; 
+    
+    .modal { padding: 1.5rem; }
+    .modal h2 { font-size: 1.1rem; }
+    .setting-item { padding: 0.7rem; margin-bottom: 1rem; }
+    .setting-item label { font-size: 0.6rem; }
+    .toggle { font-size: 0.6rem; padding: 0.5rem 0.8rem; }
+    input[type="range"] { width: 90px; }
+    
+    /* D-Pad adapté */
+    .touch-dpad { width: 180px; height: 180px; }
+    .touch-btn { width: 56px; height: 56px; font-size: 1rem; }
+    .touch-up     { top: 0;    left: 62px; }
+    .touch-left   { top: 62px; left: 0; }
+    .touch-center { top: 62px; left: 62px; }
+    .touch-right  { top: 62px; left: 124px; }
+    .touch-down   { top: 124px; left: 62px; }
+}
+
+/* ============================================
+   📱 RESPONSIVE MOBILE (paysage)
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+    body { padding: 0.5rem; }
+    
+    h1 { font-size: 1.8rem; margin-bottom: 1rem; }
+    .game-menu-title { font-size: 1.3rem; margin-bottom: 0.8rem; }
+    
+    .container { 
+        max-height: 100vh; 
+        padding: 0.5rem; 
+        max-width: 100%;
+    }
+    
+    .games-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .game-icon { transform: scale(0.55); margin: 4px auto; }
+    .game-name { font-size: 0.5rem; margin-top: 0.2rem; }
+    .game-desc { display: none; }
+    
+    .btn-play, .btn-start { font-size: 0.85rem; padding: 0.8rem 1.8rem; }
+    .btn-records, .btn-settings { font-size: 0.6rem; padding: 0.6rem 1rem; }
+    .btn-back { font-size: 0.55rem; padding: 0.6rem 1rem; }
+    
+    .buttons { gap: 0.8rem; }
+    
+    .difficulty-under-play { margin-top: 0.8rem; }
+    .difficulty-btn { font-size: 0.55rem; padding: 0.5rem 0.8rem; }
+    
+    /* D-Pad en bas à gauche en paysage */
+    .touch-controls {
+        bottom: 10px;
+        padding: 0 10px;
+    }
+    .touch-dpad {
+        width: 150px;
+        height: 150px;
+        margin-left: 20px;
+        margin-right: auto;
+    }
+    .touch-btn { width: 48px; height: 48px; font-size: 0.9rem; }
+    .touch-up     { top: 0;    left: 51px; }
+    .touch-left   { top: 51px; left: 0; }
+    .touch-center { top: 51px; left: 51px; }
+    .touch-right  { top: 51px; left: 102px; }
+    .touch-down   { top: 102px; left: 51px; }
+    
+    .game-hud-score { font-size: 0.75rem; }
+    .game-hud-lives, .game-hud-level { font-size: 0.6rem; }
+    .game-over-title { font-size: 1.8rem; }
+    .game-over-score { font-size: 0.9rem; }
+    .game-over-best { font-size: 0.65rem; }
+    .game-over-buttons { gap: 1rem; }
+    
+    .rubriques-container { margin-top: 0.8rem; }
+    .rubrique-header { font-size: 0.6rem; padding: 0.7rem 1rem; }
+    .rubrique-desc { font-size: 0.45rem; line-height: 1.8; }
+    
+    .modal { padding: 1rem; max-width: 400px; }
+    .modal h2 { font-size: 1rem; margin-bottom: 1rem; }
+    .setting-item { padding: 0.5rem; margin-bottom: 0.8rem; }
+}
+
+/* ============================================
+   📱 TABLETTE (portrait)
+   ============================================ */
+@media (min-width: 601px) and (max-width: 1024px) and (orientation: portrait) {
+    .games-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .game-icon { transform: scale(0.9); }
+    
+    h1 { font-size: 3rem; }
+    .game-menu-title { font-size: 2.5rem; }
+    
+    /* D-Pad un peu plus grand sur tablette */
+    .touch-dpad { width: 220px; height: 220px; }
+    .touch-btn { width: 70px; height: 70px; font-size: 1.4rem; }
+    .touch-up     { top: 0;    left: 75px; }
+    .touch-left   { top: 75px; left: 0; }
+    .touch-center { top: 75px; left: 75px; }
+    .touch-right  { top: 75px; left: 150px; }
+    .touch-down   { top: 150px; left: 75px; }
+}
+
+/* ============================================
+   📱 TABLETTE (paysage)
+   ============================================ */
+@media (min-width: 601px) and (max-width: 1366px) and (orientation: landscape) {
+    .games-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ============================================
+   🎁 BONUS : ADAPTATION PETITS ÉCRANS TRÈS ÉTROITS
+   ============================================ */
+@media (max-width: 360px) {
+    h1 { font-size: 1.6rem; }
+    .game-menu-title { font-size: 1.2rem; }
+    .game-name { font-size: 0.55rem; }
+    .btn-play, .btn-start { font-size: 0.85rem; padding: 0.8rem 1.5rem; }
+    .game-hud-score { font-size: 0.7rem; }
+    .game-hud-lives, .game-hud-level { font-size: 0.55rem; }
+    
+    .touch-dpad { width: 160px; height: 160px; }
+    .touch-btn { width: 50px; height: 50px; font-size: 0.9rem; }
+    .touch-up     { top: 0;    left: 55px; }
+    .touch-left   { top: 55px; left: 0; }
+    .touch-center { top: 55px; left: 55px; }
+    .touch-right  { top: 55px; left: 110px; }
+    .touch-down   { top: 110px; left: 55px; }
+}
+
+/* ============================================
+   🖨 MASQUER LES DÉCORS EN PLEIN ÉCRAN JEU
+   ============================================ */
+body.playing .container {
+    display: none;
+}
+
+body.playing .stars {
+    display: block;
+}
+/* ============================================
+   ⏱ COMPTE À REBOURS (3, 2, 1, GO!)
+   ============================================ */
+.game-countdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8rem;
+    color: #fff;
+    text-shadow: 
+        6px 6px 0 #ff00ff,
+        12px 12px 0 #00ffff,
+        0 0 40px #ffdd00,
+        0 0 80px #ffdd00;
+    z-index: 100;
+    pointer-events: none;
+    display: none;
+    text-align: center;
+    letter-spacing: 8px;
+}
+
+.game-countdown.active {
+    display: block;
+}
+
+.game-countdown.pop {
+    animation: countdownPop 0.5s ease-out;
+}
+
+@keyframes countdownPop {
+    0% { 
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+    30% { 
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 1;
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Responsive mobile */
+@media (max-width: 600px) and (orientation: portrait) {
+    .game-countdown {
+        font-size: 5rem;
+        letter-spacing: 4px;
+        text-shadow: 
+            4px 4px 0 #ff00ff,
+            8px 8px 0 #00ffff,
+            0 0 30px #ffdd00;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .game-countdown {
+        font-size: 4rem;
+        letter-spacing: 4px;
     }
 }
