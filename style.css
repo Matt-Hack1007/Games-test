@@ -1,5 +1,5 @@
 /* ============================================
-   ARCADE.IO - STYLES COMPLETS (PC + MOBILE + TABLETTE)
+   ARCADE.IO - STYLES COMPLETS
    ============================================ */
 
 * { 
@@ -60,7 +60,6 @@ body::after {
     z-index: 3;
 }
 
-/* Blocage scroll pendant les jeux */
 body.playing {
     overflow: hidden;
     position: fixed;
@@ -153,7 +152,8 @@ h1 {
     gap: 1.8rem;
 }
 
-.btn-play, .btn-settings, .btn-back, .btn-start, .btn-records, .btn-editor {
+.btn-play, .btn-settings, .btn-back, .btn-start, .btn-records, .btn-editor,
+.btn-achievements, .btn-stats {
     font-family: 'Press Start 2P', monospace;
     border: none;
     cursor: pointer;
@@ -189,6 +189,36 @@ h1 {
 }
 .btn-records:hover { background: #ff8800; color: #fff; }
 .btn-records:active { transform: translate(6px, 6px); }
+
+.btn-achievements {
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    padding: 1.3rem 3.5rem;
+    color: #0a0a1e;
+    background: #ff00ff;
+    box-shadow: 
+        inset -6px -6px 0 0 #aa00aa,
+        inset 6px 6px 0 0 #ff88ff,
+        6px 6px 0 0 #0a0a1e,
+        12px 12px 0 0 #00ffff;
+}
+.btn-achievements:hover { background: #ffdd00; }
+.btn-achievements:active { transform: translate(6px, 6px); }
+
+.btn-stats {
+    font-size: 1rem;
+    letter-spacing: 3px;
+    padding: 1.1rem 3rem;
+    color: #0a0a1e;
+    background: #00ff88;
+    box-shadow: 
+        inset -6px -6px 0 0 #00aa55,
+        inset 6px 6px 0 0 #88ffcc,
+        6px 6px 0 0 #0a0a1e,
+        12px 12px 0 0 #ff00ff;
+}
+.btn-stats:hover { background: #ffdd00; }
+.btn-stats:active { transform: translate(6px, 6px); }
 
 .btn-settings {
     font-size: 1rem;
@@ -485,7 +515,7 @@ h1 {
         10px 10px 0 0 #ff00ff;
 }
 
-/* ============ RUBRIQUES DÉROULANTES ============ */
+/* ============ RUBRIQUES ============ */
 .rubriques-container {
     max-width: 600px;
     margin: 2rem auto 0;
@@ -618,7 +648,7 @@ h1 {
 
 /* ============ RECORDS ============ */
 .records-list {
-    max-width: 700px;
+    max-width: 900px;
     margin: 0 auto 3rem;
     display: flex;
     flex-direction: column;
@@ -649,6 +679,56 @@ h1 {
 }
 .record-empty { font-size: 0.7rem; color: #555; letter-spacing: 1px; }
 
+/* Records multi-difficulté */
+.record-item-multi {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem 1.5rem;
+}
+
+.record-item-multi .record-icon {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.record-item-multi .record-name {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+}
+
+.record-difficulties {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.record-diff {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem;
+    background: rgba(10, 10, 30, 0.5);
+    border: 2px solid transparent;
+}
+
+.diff-label {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.diff-label.easy { color: #00ff88; }
+.diff-label.normal { color: #ffdd00; }
+.diff-label.hard { color: #ff3366; }
+
+.diff-score {
+    font-size: 0.7rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
 .records-actions {
     display: flex;
     justify-content: center;
@@ -675,15 +755,277 @@ h1 {
 .btn-reset:hover { background: #ffdd00; color: #0a0a1e; }
 .btn-reset:active { transform: translate(4px, 4px); }
 
-.btn-editor {
-    background: #8800ff;
+/* ============ ACHIEVEMENTS ============ */
+.achievements-list {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+}
+
+.achievements-header {
+    background: #1a1a3e;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
     box-shadow: 
-        inset -4px -4px 0 0 #5500aa,
-        inset 4px 4px 0 0 #bb88ff,
+        inset -4px -4px 0 0 #0a0a1e,
+        inset 4px 4px 0 0 #2a2a5e,
         4px 4px 0 0 #0a0a1e,
         8px 8px 0 0 #ffdd00;
 }
-.btn-editor:hover { background: #ffdd00; color: #0a0a1e; }
+
+.achievements-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 16px;
+    background: #0a0a1e;
+    box-shadow: inset -2px -2px 0 0 #2a2a5e, inset 2px 2px 0 0 #000010;
+    min-width: 150px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #ffdd00);
+    transition: width 0.5s;
+    box-shadow: 0 0 10px #00ff88;
+}
+
+.progress-percent {
+    font-size: 1rem;
+    color: #ffdd00;
+    text-shadow: 2px 2px 0 #ff00ff;
+}
+
+.achievements-category {
+    font-size: 1rem;
+    color: #ffdd00;
+    letter-spacing: 2px;
+    margin: 2rem 0 1rem;
+    text-align: left;
+    text-shadow: 2px 2px 0 #ff00ff;
+    padding-left: 0.5rem;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #1a1a3e;
+    box-shadow: 
+        inset -3px -3px 0 0 #0a0a1e,
+        inset 3px 3px 0 0 #2a2a5e,
+        3px 3px 0 0 #0a0a1e,
+        6px 6px 0 0 #ff00ff;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.achievement-item.unlocked {
+    box-shadow: 
+        inset -3px -3px 0 0 #0a0a1e,
+        inset 3px 3px 0 0 #2a2a5e,
+        3px 3px 0 0 #0a0a1e,
+        6px 6px 0 0 #00ff88;
+}
+
+.achievement-item.unlocked:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 
+        inset -3px -3px 0 0 #0a0a1e,
+        inset 3px 3px 0 0 #2a2a5e,
+        3px 3px 0 0 #0a0a1e,
+        8px 8px 0 0 #00ff88;
+}
+
+.achievement-item.locked {
+    opacity: 0.5;
+}
+
+.achievement-item-icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.achievement-item-content {
+    flex: 1;
+    text-align: left;
+}
+
+.achievement-item-name {
+    font-size: 0.7rem;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 0.4rem;
+}
+
+.achievement-item.unlocked .achievement-item-name {
+    color: #00ff88;
+}
+
+.achievement-item-desc {
+    font-size: 0.55rem;
+    color: #00ffff;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+    margin-bottom: 0.3rem;
+}
+
+.achievement-item-xp {
+    font-size: 0.6rem;
+    color: #ffdd00;
+    text-shadow: 1px 1px 0 #ff00ff;
+}
+
+/* ============ NOTIFICATION SUCCÈS ============ */
+.achievement-notification {
+    position: fixed;
+    top: 20px;
+    right: -400px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #0a0a1e;
+    border: 4px solid #ffdd00;
+    box-shadow: 
+        0 0 30px #ffdd00,
+        0 0 60px #ffdd00,
+        inset 0 0 20px rgba(255, 221, 0, 0.3);
+    transition: right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 90vw;
+}
+
+.achievement-notification.show {
+    right: 20px;
+}
+
+.achievement-notification.level-up {
+    border-color: #ff00ff;
+    box-shadow: 
+        0 0 30px #ff00ff,
+        0 0 60px #ff00ff,
+        inset 0 0 20px rgba(255, 0, 255, 0.3);
+}
+
+.achievement-notification .achievement-icon {
+    font-size: 3rem;
+    animation: achievementBounce 0.6s ease-in-out;
+}
+
+@keyframes achievementBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3) rotate(10deg); }
+}
+
+.achievement-notification .achievement-content {
+    text-align: left;
+}
+
+.achievement-notification .achievement-label {
+    font-size: 0.55rem;
+    color: #ffdd00;
+    letter-spacing: 2px;
+    margin-bottom: 0.3rem;
+    text-shadow: 1px 1px 0 #ff00ff;
+}
+
+.achievement-notification.level-up .achievement-label {
+    color: #ff00ff;
+    text-shadow: 1px 1px 0 #00ffff;
+}
+
+.achievement-notification .achievement-name {
+    font-size: 0.85rem;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 0.3rem;
+    text-shadow: 2px 2px 0 #ff00ff;
+}
+
+.achievement-notification .achievement-desc {
+    font-size: 0.55rem;
+    color: #00ffff;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.3rem;
+}
+
+.achievement-notification .achievement-xp {
+    font-size: 0.65rem;
+    color: #00ff88;
+    text-shadow: 1px 1px 0 #ff00ff;
+}
+
+/* ============ STATS ============ */
+.stats-container {
+    max-width: 700px;
+    margin: 0 auto 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    background: #1a1a3e;
+    box-shadow: 
+        inset -4px -4px 0 0 #0a0a1e,
+        inset 4px 4px 0 0 #2a2a5e,
+        4px 4px 0 0 #0a0a1e,
+        8px 8px 0 0 #00ffff;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.stat-content {
+    flex: 1;
+    text-align: left;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: #00ffff;
+    letter-spacing: 2px;
+    margin-bottom: 0.3rem;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    color: #ffdd00;
+    text-shadow: 2px 2px 0 #ff00ff;
+    letter-spacing: 2px;
+}
+
+.stat-sub {
+    font-size: 0.55rem;
+    color: #ff88ff;
+    margin-top: 0.3rem;
+    letter-spacing: 1px;
+}
 
 /* ============ NOUVEAU RECORD ============ */
 .new-record-popup {
@@ -727,7 +1069,7 @@ h1 {
     text-shadow: 2px 2px 0 #ff00ff;
 }
 
-/* ============ ÉDITEUR PADDLE ============ */
+/* ============ ÉDITEUR ============ */
 .editor-container { max-width: 900px; margin: 0 auto; }
 .editor-grid {
     display: grid;
@@ -1005,7 +1347,6 @@ h1 {
     100% { left: -80px; } 
 }
 
-/* PAC-MAN MENU */
 .menu-pacman {
     position: absolute;
     width: 50px;
@@ -1160,23 +1501,6 @@ h1 {
 }
 .game-controls span { color: #ffdd00; }
 
-.start-game-message {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 1.5rem;
-    letter-spacing: 3px;
-    text-align: center;
-    z-index: 7;
-    text-shadow: 3px 3px 0 #ff00ff, 6px 6px 0 #00ffff;
-    animation: blink 1s steps(2) infinite;
-    pointer-events: none;
-    display: none;
-}
-.start-game-message.active { display: block; }
-
 .game-over-overlay {
     display: none;
     position: fixed;
@@ -1231,7 +1555,7 @@ h1 {
     justify-content: center;
 }
 
-/* ============ MODALE PARAMÈTRES ============ */
+/* ============ MODALE ============ */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -1258,6 +1582,8 @@ h1 {
         8px 8px 0 0 #ff00ff,
         16px 16px 0 0 #00ffff;
     border: 4px solid #00ffff;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal h2 {
@@ -1328,16 +1654,6 @@ input[type="range"]::-webkit-slider-thumb {
         2px 2px 0 0 #0a0a1e;
     cursor: pointer;
 }
-input[type="range"]::-moz-range-thumb {
-    width: 16px; height: 16px;
-    background: #ff00ff; 
-    border: none;
-    box-shadow: 
-        inset -3px -3px 0 0 #aa00aa, 
-        inset 3px 3px 0 0 #ff88ff, 
-        2px 2px 0 0 #0a0a1e;
-    cursor: pointer;
-}
 
 .btn-close {
     font-family: 'Press Start 2P', monospace;
@@ -1366,9 +1682,7 @@ input[type="range"]::-moz-range-thumb {
 body { cursor: crosshair; }
 body.is-touch { cursor: default; }
 
-/* ============================================
-   ⏱ COMPTE À REBOURS (3, 2, 1, GO!)
-   ============================================ */
+/* ============ COMPTE À REBOURS ============ */
 .game-countdown {
     position: fixed;
     top: 50%;
@@ -1389,33 +1703,16 @@ body.is-touch { cursor: default; }
     letter-spacing: 8px;
 }
 
-.game-countdown.active {
-    display: block;
-}
-
-.game-countdown.pop {
-    animation: countdownPop 0.5s ease-out;
-}
+.game-countdown.active { display: block; }
+.game-countdown.pop { animation: countdownPop 0.5s ease-out; }
 
 @keyframes countdownPop {
-    0% { 
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
-    }
-    30% { 
-        transform: translate(-50%, -50%) scale(1.3);
-        opacity: 1;
-    }
-    100% { 
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
-/* ============================================
-   📱 CONTRÔLES TACTILES (mobile/tablette)
-   ============================================ */
-
+/* ============ CONTRÔLES TACTILES ============ */
 .touch-controls {
     display: none;
     position: fixed;
@@ -1429,25 +1726,19 @@ body.is-touch { cursor: default; }
     transition: opacity 0.3s;
 }
 
-/* Afficher UNIQUEMENT sur mobile/tactile */
 body.is-touch .touch-controls {
     display: block;
     opacity: 1;
 }
 
-/* Masquer quand on n'est pas en jeu */
 body.is-touch:not(.playing) .touch-controls {
     display: none;
 }
 
-/* Cacher sur grands écrans */
 @media (min-width: 1025px) {
     .touch-controls { display: none !important; }
 }
 
-/* ============================================
-   D-PAD (croix directionnelle)
-   ============================================ */
 .touch-dpad {
     position: relative;
     width: 200px;
@@ -1490,7 +1781,6 @@ body.is-touch:not(.playing) .touch-controls {
     color: #fff;
 }
 
-/* Position des boutons */
 .touch-up     { top: 0;    left: 68px; }
 .touch-left   { top: 68px; left: 0; }
 .touch-center { top: 68px; left: 68px; background: rgba(255, 221, 0, 0.85); }
@@ -1498,80 +1788,46 @@ body.is-touch:not(.playing) .touch-controls {
 .touch-right  { top: 68px; left: 136px; }
 .touch-down   { top: 136px; left: 68px; }
 
-/* Cache la barre de contrôles clavier sur mobile */
 @media (max-width: 900px) {
-    .game-controls {
-        display: none !important;
-    }
+    .game-controls { display: none !important; }
 }
 
-/* ============================================
-   📱 RESPONSIVE MOBILE (portrait)
-   ============================================ */
+/* ============ RESPONSIVE ============ */
 @media (max-width: 600px) and (orientation: portrait) {
     body { padding: 0.5rem; }
-    
-    h1 { 
-        font-size: 2rem; 
-        letter-spacing: 2px; 
-        margin-bottom: 2rem; 
-    }
+    h1 { font-size: 2rem; letter-spacing: 2px; margin-bottom: 2rem; }
     .game-menu-title { font-size: 1.5rem; letter-spacing: 2px; }
-    
     .container { padding: 1rem; }
-    
-    .games-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.8rem;
-    }
-    
+    .games-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
     .game-icon { transform: scale(0.7); margin: 8px auto; }
     .game-name { font-size: 0.6rem; letter-spacing: 1px; }
     .game-desc { font-size: 0.4rem; }
-    
     .btn-play, .btn-start { font-size: 1rem; padding: 1rem 2rem; letter-spacing: 2px; }
-    .btn-records { font-size: 0.75rem; padding: 0.8rem 1.5rem; }
-    .btn-settings { font-size: 0.7rem; padding: 0.7rem 1.3rem; }
+    .btn-records, .btn-achievements { font-size: 0.75rem; padding: 0.8rem 1.5rem; }
+    .btn-settings, .btn-stats { font-size: 0.7rem; padding: 0.7rem 1.3rem; }
     .btn-back { font-size: 0.65rem; padding: 0.7rem 1.3rem; }
-    
     .difficulty-btn { font-size: 0.6rem; padding: 0.6rem 1rem; letter-spacing: 1px; }
-    
-    /* HUD jeux */
-    .game-hud {
-        top: 10px;
-        left: 10px;
-        right: 10px;
-    }
+    .game-hud { top: 10px; left: 10px; right: 10px; }
     .game-hud-score { font-size: 0.85rem; }
     .game-hud-lives, .game-hud-level { font-size: 0.65rem; }
-    
-    .start-game-message { font-size: 1rem; padding: 0 1rem; }
-    
     .game-over-title { font-size: 2rem; letter-spacing: 2px; }
     .game-over-score { font-size: 1rem; }
     .game-over-best { font-size: 0.75rem; letter-spacing: 1px; }
     .game-over-buttons { flex-direction: column; gap: 0.8rem; }
-    
     .record-item { padding: 0.8rem 1rem; }
     .record-name { font-size: 0.65rem; }
     .record-score { font-size: 0.8rem; }
-    
     .new-record-text { font-size: 1.2rem; }
     .new-record-score { font-size: 0.9rem; }
     .new-record-popup { padding: 1.5rem; }
-    
-    .editor-grid { padding: 1rem; gap: 3px; }
     .rubrique-header { font-size: 0.7rem; padding: 1rem; }
     .rubrique-desc { font-size: 0.5rem; }
-    
     .modal { padding: 1.5rem; }
     .modal h2 { font-size: 1.1rem; }
     .setting-item { padding: 0.7rem; margin-bottom: 1rem; }
     .setting-item label { font-size: 0.6rem; }
     .toggle { font-size: 0.6rem; padding: 0.5rem 0.8rem; }
     input[type="range"] { width: 90px; }
-    
-    /* D-Pad adapté */
     .touch-dpad { width: 180px; height: 180px; }
     .touch-btn { width: 56px; height: 56px; font-size: 1rem; }
     .touch-up     { top: 0;    left: 62px; }
@@ -1579,104 +1835,57 @@ body.is-touch:not(.playing) .touch-controls {
     .touch-center { top: 62px; left: 62px; }
     .touch-right  { top: 62px; left: 124px; }
     .touch-down   { top: 124px; left: 62px; }
-    
-    /* Compte à rebours */
-    .game-countdown {
-        font-size: 5rem;
-        letter-spacing: 4px;
-        text-shadow: 
-            4px 4px 0 #ff00ff,
-            8px 8px 0 #00ffff,
-            0 0 30px #ffdd00;
-    }
+    .game-countdown { font-size: 5rem; letter-spacing: 4px; }
+    .achievements-grid { grid-template-columns: 1fr; }
+    .achievement-notification { max-width: calc(100vw - 40px); padding: 0.8rem 1rem; }
+    .achievement-notification .achievement-icon { font-size: 2rem; }
+    .achievement-notification .achievement-name { font-size: 0.7rem; }
+    .stats-container { max-width: 100%; }
 }
 
-/* ============================================
-   📱 RESPONSIVE MOBILE (paysage)
-   ============================================ */
 @media (max-height: 500px) and (orientation: landscape) {
     body { padding: 0.5rem; }
-    
     h1 { font-size: 1.8rem; margin-bottom: 1rem; }
     .game-menu-title { font-size: 1.3rem; margin-bottom: 0.8rem; }
-    
-    .container { 
-        max-height: 100vh; 
-        padding: 0.5rem; 
-        max-width: 100%;
-    }
-    
-    .games-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
+    .container { max-height: 100vh; padding: 0.5rem; max-width: 100%; }
+    .games-grid { grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
     .game-icon { transform: scale(0.55); margin: 4px auto; }
     .game-name { font-size: 0.5rem; margin-top: 0.2rem; }
     .game-desc { display: none; }
-    
     .btn-play, .btn-start { font-size: 0.85rem; padding: 0.8rem 1.8rem; }
-    .btn-records, .btn-settings { font-size: 0.6rem; padding: 0.6rem 1rem; }
+    .btn-records, .btn-achievements, .btn-settings, .btn-stats { font-size: 0.6rem; padding: 0.6rem 1rem; }
     .btn-back { font-size: 0.55rem; padding: 0.6rem 1rem; }
-    
     .buttons { gap: 0.8rem; }
-    
     .difficulty-under-play { margin-top: 0.8rem; }
     .difficulty-btn { font-size: 0.55rem; padding: 0.5rem 0.8rem; }
-    
-    /* D-Pad en bas à gauche en paysage */
-    .touch-controls {
-        bottom: 10px;
-        padding: 0 10px;
-    }
-    .touch-dpad {
-        width: 150px;
-        height: 150px;
-        margin-left: 20px;
-        margin-right: auto;
-    }
+    .touch-controls { bottom: 10px; padding: 0 10px; }
+    .touch-dpad { width: 150px; height: 150px; margin-left: 20px; margin-right: auto; }
     .touch-btn { width: 48px; height: 48px; font-size: 0.9rem; }
     .touch-up     { top: 0;    left: 51px; }
     .touch-left   { top: 51px; left: 0; }
     .touch-center { top: 51px; left: 51px; }
     .touch-right  { top: 51px; left: 102px; }
     .touch-down   { top: 102px; left: 51px; }
-    
     .game-hud-score { font-size: 0.75rem; }
     .game-hud-lives, .game-hud-level { font-size: 0.6rem; }
     .game-over-title { font-size: 1.8rem; }
     .game-over-score { font-size: 0.9rem; }
     .game-over-best { font-size: 0.65rem; }
     .game-over-buttons { gap: 1rem; }
-    
     .rubriques-container { margin-top: 0.8rem; }
     .rubrique-header { font-size: 0.6rem; padding: 0.7rem 1rem; }
     .rubrique-desc { font-size: 0.45rem; line-height: 1.8; }
-    
     .modal { padding: 1rem; max-width: 400px; }
     .modal h2 { font-size: 1rem; margin-bottom: 1rem; }
     .setting-item { padding: 0.5rem; margin-bottom: 0.8rem; }
-    
-    /* Compte à rebours */
-    .game-countdown {
-        font-size: 4rem;
-        letter-spacing: 4px;
-    }
+    .game-countdown { font-size: 4rem; letter-spacing: 4px; }
 }
 
-/* ============================================
-   📱 TABLETTE (portrait)
-   ============================================ */
 @media (min-width: 601px) and (max-width: 1024px) and (orientation: portrait) {
-    .games-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
+    .games-grid { grid-template-columns: repeat(3, 1fr); }
     .game-icon { transform: scale(0.9); }
-    
     h1 { font-size: 3rem; }
     .game-menu-title { font-size: 2.5rem; }
-    
     .touch-dpad { width: 220px; height: 220px; }
     .touch-btn { width: 70px; height: 70px; font-size: 1.4rem; }
     .touch-up     { top: 0;    left: 75px; }
@@ -1686,18 +1895,10 @@ body.is-touch:not(.playing) .touch-controls {
     .touch-down   { top: 150px; left: 75px; }
 }
 
-/* ============================================
-   📱 TABLETTE (paysage)
-   ============================================ */
 @media (min-width: 601px) and (max-width: 1366px) and (orientation: landscape) {
-    .games-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
+    .games-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* ============================================
-   🎁 BONUS : TRÈS PETITS ÉCRANS (≤ 360px)
-   ============================================ */
 @media (max-width: 360px) {
     h1 { font-size: 1.6rem; }
     .game-menu-title { font-size: 1.2rem; }
@@ -1705,7 +1906,6 @@ body.is-touch:not(.playing) .touch-controls {
     .btn-play, .btn-start { font-size: 0.85rem; padding: 0.8rem 1.5rem; }
     .game-hud-score { font-size: 0.7rem; }
     .game-hud-lives, .game-hud-level { font-size: 0.55rem; }
-    
     .touch-dpad { width: 160px; height: 160px; }
     .touch-btn { width: 50px; height: 50px; font-size: 0.9rem; }
     .touch-up     { top: 0;    left: 55px; }
@@ -1713,20 +1913,8 @@ body.is-touch:not(.playing) .touch-controls {
     .touch-center { top: 55px; left: 55px; }
     .touch-right  { top: 55px; left: 110px; }
     .touch-down   { top: 110px; left: 55px; }
-    
-    .game-countdown {
-        font-size: 4rem;
-        letter-spacing: 3px;
-    }
+    .game-countdown { font-size: 4rem; letter-spacing: 3px; }
 }
 
-/* ============================================
-   🖨 MASQUER LES DÉCORS EN PLEIN ÉCRAN JEU
-   ============================================ */
-body.playing .container {
-    display: none;
-}
-
-body.playing .stars {
-    display: block;
-}
+body.playing .container { display: none; }
+body.playing .stars { display: block; }

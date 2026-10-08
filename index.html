@@ -16,22 +16,20 @@
 
     <div class="container" id="mainContainer">
         
-        <!-- ============================================ -->
-        <!-- MENU PRINCIPAL                                -->
-        <!-- ============================================ -->
+        <!-- ===== MENU PRINCIPAL ===== -->
         <div class="view active" id="menuView">
             <h1>Arcade.io</h1>
             <div class="buttons">
                 <button class="btn-play" onclick="showGames()">JOUER</button>
                 <button class="btn-records" onclick="showRecords()">🏆 RECORDS</button>
+                <button class="btn-achievements" onclick="showAchievements()">🏅 SUCCÈS</button>
+                <button class="btn-stats" onclick="showStats()">📊 STATS</button>
                 <button class="btn-settings" onclick="openSettings()">⚙ PARAMÈTRES</button>
                 <button class="btn-settings" onclick="toggleMobileFullscreen()" id="fullscreenBtn" style="display: none;">⛶ PLEIN ÉCRAN</button>
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- VUE RECORDS                                   -->
-        <!-- ============================================ -->
+        <!-- ===== VUE RECORDS ===== -->
         <div class="view" id="recordsView">
             <h2 class="games-title">🏆 RECORDS 🏆</h2>
             <div class="records-list" id="recordsList"></div>
@@ -41,9 +39,25 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- SÉLECTION DE JEUX                             -->
-        <!-- ============================================ -->
+        <!-- ===== VUE ACHIEVEMENTS ===== -->
+        <div class="view" id="achievementsView">
+            <h2 class="games-title">🏅 SUCCÈS 🏅</h2>
+            <div class="achievements-list" id="achievementsList"></div>
+            <div class="records-actions">
+                <button class="btn-back" onclick="showMenu()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <!-- ===== VUE STATISTIQUES ===== -->
+        <div class="view" id="statsView">
+            <h2 class="games-title">📊 STATISTIQUES 📊</h2>
+            <div class="stats-container" id="statsContainer"></div>
+            <div class="records-actions">
+                <button class="btn-back" onclick="showMenu()">◀ RETOUR</button>
+            </div>
+        </div>
+
+        <!-- ===== SÉLECTION DE JEUX ===== -->
         <div class="view" id="gamesView">
             <h2 class="games-title">▶ CHOISIS UN JEU ◀</h2>
             <div class="games-grid">
@@ -91,9 +105,7 @@
             <button class="btn-back" onclick="showMenu()">◀ RETOUR</button>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU ASTEROIDS                                -->
-        <!-- ============================================ -->
+        <!-- ===== MENU ASTEROIDS ===== -->
         <div class="view" id="asteroidsView">
             <div class="space-scene" id="spaceScene"></div>
             <h2 class="game-menu-title">☄ Asteroïds</h2>
@@ -130,9 +142,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU PADDLE                                   -->
-        <!-- ============================================ -->
+        <!-- ===== MENU PADDLE ===== -->
         <div class="view" id="paddleView">
             <div class="brick-scene" id="brickScene"></div>
             <h2 class="game-menu-title">🏓 Paddle</h2>
@@ -188,9 +198,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU TENNIS                                   -->
-        <!-- ============================================ -->
+        <!-- ===== MENU TENNIS ===== -->
         <div class="view" id="tennisView">
             <div class="tennis-scene" id="tennisScene"></div>
             <h2 class="game-menu-title">🎾 Tennis</h2>
@@ -240,9 +248,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU INVADERS                                 -->
-        <!-- ============================================ -->
+        <!-- ===== MENU INVADERS ===== -->
         <div class="view" id="invadersView">
             <div class="invaders-scene" id="invadersScene"></div>
             <h2 class="game-menu-title">👾 Invaders</h2>
@@ -292,9 +298,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU SNAKE                                    -->
-        <!-- ============================================ -->
+        <!-- ===== MENU SNAKE ===== -->
         <div class="view" id="snakeView">
             <div class="snake-scene" id="snakeScene"></div>
             <h2 class="game-menu-title">🐍 Snake</h2>
@@ -330,9 +334,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU TETRIS                                   -->
-        <!-- ============================================ -->
+        <!-- ===== MENU TETRIS ===== -->
         <div class="view" id="tetrisView">
             <div class="tetris-scene" id="tetrisScene"></div>
             <h2 class="game-menu-title">🧱 Tetris</h2>
@@ -383,9 +385,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU FLAPPY                                   -->
-        <!-- ============================================ -->
+        <!-- ===== MENU FLAPPY ===== -->
         <div class="view" id="flappyView">
             <div class="flappy-scene" id="flappyScene"></div>
             <h2 class="game-menu-title">🐦 Flappy</h2>
@@ -420,9 +420,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- MENU PAC-MAN                                  -->
-        <!-- ============================================ -->
+        <!-- ===== MENU PAC-MAN ===== -->
         <div class="view" id="pacmanView">
             <div class="pacman-scene" id="pacmanScene"></div>
             <h2 class="game-menu-title">🟡 Pac-Man</h2>
@@ -473,9 +471,7 @@
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- ÉDITEUR PADDLE                                -->
-        <!-- ============================================ -->
+        <!-- ===== ÉDITEUR PADDLE ===== -->
         <div class="view" id="editorView">
             <h2 class="games-title">✏️ ÉDITEUR DE NIVEAUX</h2>
             <div class="editor-container">
@@ -491,22 +487,13 @@
 
     </div>
 
-    <!-- ============================================ -->
-    <!-- VUES DE JEU (générées dynamiquement par JS)   -->
-    <!-- ============================================ -->
     <div id="gameViewsContainer"></div>
 
-    <!-- ============================================ -->
-    <!-- POPUP NOUVEAU RECORD                          -->
-    <!-- ============================================ -->
     <div class="new-record-popup" id="newRecordPopup">
         <div class="new-record-text">🏆 NOUVEAU RECORD ! 🏆</div>
         <div class="new-record-score" id="newRecordScore"></div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- MODALE PARAMÈTRES                             -->
-    <!-- ============================================ -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <h2>⚙ PARAMÈTRES ⚙</h2>
@@ -526,27 +513,24 @@
                 <label>PLEIN ÉCRAN</label>
                 <button class="toggle" onclick="toggleFullscreen(this)">OFF</button>
             </div>
+            <div class="setting-item">
+                <label>RESET DONNÉES</label>
+                <button class="toggle" onclick="resetAllDataConfirm(this)">🗑 RESET</button>
+            </div>
             <button class="btn-close" onclick="closeSettings()">FERMER</button>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SCRIPTS (⚠️ ORDRE IMPORTANT !)                -->
-    <!-- ============================================ -->
-    
-    <!-- 1. Détection d'appareil (PREMIER) -->
+    <!-- ===== SCRIPTS (⚠️ ORDRE IMPORTANT) ===== -->
     <script src="js/device.js"></script>
-    
-    <!-- 2. Systèmes de base -->
+    <script src="js/canvas-utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/achievements.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/records.js"></script>
-    
-    <!-- 3. Navigation et vues -->
     <script src="js/navigation.js"></script>
     <script src="js/game-views.js"></script>
     <script src="js/editor.js"></script>
-    
-    <!-- 4. Jeux -->
     <script src="js/asteroids.js"></script>
     <script src="js/paddle.js"></script>
     <script src="js/tennis.js"></script>
@@ -555,44 +539,8 @@
     <script src="js/tetris.js"></script>
     <script src="js/flappy.js"></script>
     <script src="js/pacman.js"></script>
-    
-    <!-- 5. Contrôles -->
     <script src="js/keyboard.js"></script>
     <script src="js/touch-controls.js"></script>
-    
-    <!-- 6. Initialisation (DERNIER) -->
     <script src="js/main.js"></script>
-    
-    <!-- ============================================ -->
-    <!-- SCRIPT DE SECOURS (si main.js ne charge pas)  -->
-    <!-- ============================================ -->
-    <script>
-        // Vérifier après chargement que tout va bien
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                // Vérifier que les fonctions essentielles existent
-                const missing = [];
-                if (typeof createAllGameViews !== 'function') missing.push('createAllGameViews');
-                if (typeof initFlappy !== 'function') missing.push('initFlappy');
-                if (typeof startGame !== 'function') missing.push('startGame');
-                if (typeof showView !== 'function') missing.push('showView');
-                
-                if (missing.length > 0) {
-                    console.error('❌ Fonctions manquantes :', missing);
-                    console.error('Vérifie que les fichiers js/ sont bien chargés !');
-                } else {
-                    console.log('✅ Toutes les fonctions essentielles sont chargées');
-                }
-                
-                // Vérifier que gameViewsContainer existe
-                const container = document.getElementById('gameViewsContainer');
-                if (container && container.children.length === 0) {
-                    console.warn('⚠️ Aucune vue de jeu créée. Est-ce que createAllGameViews() a été appelée ?');
-                } else if (container) {
-                    console.log('✅ ' + container.children.length + ' vues de jeu créées');
-                }
-            }, 500);
-        });
-    </script>
 </body>
 </html>
