@@ -1,5 +1,5 @@
 // ============================================
-// 👾 INVADERS
+// 👾 INVADERS (avec sauvegarde + achievements)
 // ============================================
 var iCanvas, iCtx, iW, iH;
 var iSettings, iGame, iKeys, iPlayer;
@@ -65,6 +65,7 @@ function iInit() {
     iGame.lives = iSettings.lives;
     iGame.level = 1;
     iGame.gameOver = false;
+    iGame._lastSave = 0;
     iPlayer.width = 40; iPlayer.height = 24;
     iPlayer.speed = iSettings.playerSpeed;
     iPlayer.x = iW / 2 - iPlayer.width / 2;
@@ -114,6 +115,16 @@ function startInvadersGame() {
     setTimeout(() => {
         iResize();
         iInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('invaders') : null;
+        if (savedState && savedState.score > 0) {
+            iGame.score = savedState.score || 0;
+            iGame.level = savedState.level || 1;
+            iGame.lives = savedState.lives || iSettings.lives;
+            iUpdateHUD();
+            console.log('💾 Sauvegarde Invaders chargée:', savedState);
+        }
+        
         if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
         iRenderLoop();
         showCountdown('invaders', () => {
@@ -144,6 +155,20 @@ function iShoot() {
 
 function iUpdate() {
     if (!iGame.running) return;
+    
+    if (typeof saveGameState === 'function') {
+        if (!iGame._lastSave || performance.now() - iGame._lastSave > 5000) {
+            iGame._lastSave = performance.now();
+            if (iGame.running && iGame.score > 0) {
+                saveGameState('invaders', {
+                    score: iGame.score,
+                    lives: iGame.lives,
+                    level: iGame.level
+                });
+            }
+        }
+    }
+    
     if (iShootCooldown > 0) iShootCooldown--;
     if (iKeys.ArrowLeft) iPlayer.x -= iPlayer.speed;
     if (iKeys.ArrowRight) iPlayer.x += iPlayer.speed;
@@ -158,6 +183,9 @@ function iUpdate() {
         iDirection = 1;
         iUpdateHUD();
         playPickup();
+        if (iGame.level >= 5 && typeof unlockAchievement === 'function') {
+            unlockAchievement('invaders_wave5');
+        }
         return;
     }
     const factor = iSpeedMult * (1 + (iSettings.rows * iSettings.cols - alive.length) * 0.02);
@@ -203,6 +231,7 @@ function iUpdate() {
                 iUpdateHUD();
                 playExplosion();
                 playPickup();
+                if (typeof unlockAchievement === 'function') unlockAchievement('invaders_ufo');
                 for (let j = 0; j < 25; j++) {
                     const a = Math.random() * Math.PI * 2;
                     const sp = 2 + Math.random() * 5;
@@ -278,14 +307,34 @@ function iEndGame() {
     iGame.running = false;
     iGame.gameOver = true;
     playGameOver();
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('invaders', iGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('invaders');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('invaders', iGame.score, difficulties.invaders) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('invaders', iGame.score, 0);
+    
+    checkInvadersAchievements(iGame);
+    
     const fs = document.getElementById('invadersFinalScore');
     const bs = document.getElementById('invadersBestScore');
     const go = document.getElementById('invadersGameOver');
     if (fs) fs.textContent = iGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('invaders');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.invaders.toUpperCase() + ') : ' + getBestScore('invaders', difficulties.invaders);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(iGame.score), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(iGame.score, 'invaders', difficulties.invaders), 800);
+    }
+}
+
+function checkInvadersAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 1000) unlockAchievement('invaders_1000');
+    if (game.level >= 5) unlockAchievement('invaders_wave5');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function iDrawPattern(pattern, x, y, size, color) {

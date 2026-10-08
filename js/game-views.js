@@ -1,5 +1,5 @@
 // ============================================
-// 🎮 VUES DE JEU (générées dynamiquement)
+// 🎮 VUES DE JEU
 // ============================================
 
 function createGameView(gameId, hudConfig, controlsText) {
@@ -20,9 +20,7 @@ function createGameView(gameId, hudConfig, controlsText) {
     
     view.innerHTML = `
         <canvas id="${gameId}Canvas"></canvas>
-        <div class="game-hud">
-            ${hudHtml}
-        </div>
+        <div class="game-hud">${hudHtml}</div>
         <div class="game-controls">${controlsText}</div>
         <div class="game-countdown" id="${gameId}Countdown"></div>
         <div class="game-over-overlay" id="${gameId}GameOver">
@@ -42,23 +40,20 @@ function createGameView(gameId, hudConfig, controlsText) {
 function createAllGameViews() {
     const container = document.getElementById('gameViewsContainer');
     if (!container) {
-        console.error('❌ gameViewsContainer manquant dans le HTML !');
+        console.error('❌ gameViewsContainer manquant !');
         return;
     }
     
-    // ASTEROIDS
     createGameView('asteroids',
         { score: true, level: true, lives: true },
         `<span>↑</span> PROPULSION | <span>← →</span> ROTATION | <span>ESPACE</span> TIR | <span>↓</span> HYPERESPACE | <span>ÉCHAP</span> QUITTER`
     );
     
-    // PADDLE
     createGameView('paddle',
         { score: true, level: true, lives: true },
         `<span>← →</span> DÉPLACER | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER`
     );
     
-    // TENNIS (HUD spécial)
     const tennisView = document.createElement('div');
     tennisView.className = 'game-view';
     tennisView.id = 'tennisGameView';
@@ -70,7 +65,7 @@ function createAllGameViews() {
             <div class="game-hud-lives">J2 : <span id="tennisScore2">0</span></div>
         </div>
         <div class="game-controls" id="tennisControls">
-            <span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ESPACE</span> LANCER | <span>ÉCHAP</span> QUITTER
+            <span>Q/A</span> ou <span>↑/↓</span> J1 | <span>P/L</span> J2 | <span>ÉCHAP</span> QUITTER
         </div>
         <div class="game-countdown" id="tennisCountdown"></div>
         <div class="game-over-overlay" id="tennisGameOver">
@@ -85,31 +80,26 @@ function createAllGameViews() {
     `;
     container.appendChild(tennisView);
     
-    // INVADERS
     createGameView('invaders',
         { score: true, level: true, lives: true, levelText: 'VAGUE' },
         `<span>← →</span> DÉPLACER | <span>ESPACE</span> TIRER | <span>ÉCHAP</span> QUITTER`
     );
     
-    // SNAKE
     createGameView('snake',
         { score: true, level: true, lives: true, livesText: 'LONGUEUR' },
         `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
     );
     
-    // TETRIS
     createGameView('tetris',
         { score: true, level: true, lives: true, livesText: 'LIGNES' },
         `<span>← →</span> DÉPLACER | <span>↑</span> ROTATION | <span>↓</span> DESCENDRE | <span>ESPACE</span> CHUTE | <span>ÉCHAP</span> QUITTER`
     );
     
-    // FLAPPY
     createGameView('flappy',
         { score: true, level: true, lives: true, livesText: 'MEILLEUR' },
         `<span>ESPACE</span> ou <span>CLIC</span> VOLER | <span>ÉCHAP</span> QUITTER`
     );
     
-    // PACMAN
     createGameView('pacman',
         { score: true, level: true, lives: true },
         `<span>← ↑ → ↓</span> DIRECTION | <span>ESPACE</span> PAUSE | <span>ÉCHAP</span> QUITTER`
@@ -117,9 +107,95 @@ function createAllGameViews() {
 }
 
 // ============================================
-// 🎯 LANCEUR GLOBAL
+// 🏅 ÉCRAN ACHIEVEMENTS
+// ============================================
+function showAchievements() {
+    const list = document.getElementById('achievementsList');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    
+    const categories = {
+        general: '🌟 GÉNÉRAUX',
+        asteroids: '☄️ ASTEROIDS',
+        paddle: '🏓 PADDLE',
+        tennis: '🎾 TENNIS',
+        invaders: '👾 INVADERS',
+        snake: '🐍 SNAKE',
+        tetris: '🧱 TETRIS',
+        flappy: '🐦 FLAPPY',
+        pacman: '🟡 PAC-MAN',
+        secret: '🎭 SECRETS'
+    };
+    
+    const unlocked = getUnlockedAchievements();
+    const progress = getAchievementProgress();
+    
+    const header = document.createElement('div');
+    header.className = 'achievements-header';
+    header.innerHTML = `
+        <div class="achievements-progress">
+            <div class="progress-text">${progress.done} / ${progress.total} DÉBLOQUÉS</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress.percent}%"></div>
+            </div>
+            <div class="progress-percent">${progress.percent}%</div>
+        </div>
+    `;
+    list.appendChild(header);
+    
+    Object.keys(categories).forEach(catId => {
+        const achievements = getAchievementsByCategory(catId);
+        if (achievements.length === 0) return;
+        
+        const catTitle = document.createElement('div');
+        catTitle.className = 'achievements-category';
+        catTitle.textContent = categories[catId];
+        list.appendChild(catTitle);
+        
+        const grid = document.createElement('div');
+        grid.className = 'achievements-grid';
+        
+        achievements.forEach(a => {
+            const isUnlocked = unlocked[a.id] === true;
+            const item = document.createElement('div');
+            item.className = 'achievement-item' + (isUnlocked ? ' unlocked' : ' locked');
+            item.innerHTML = `
+                <div class="achievement-item-icon">${isUnlocked ? a.icon : '🔒'}</div>
+                <div class="achievement-item-content">
+                    <div class="achievement-item-name">${isUnlocked ? a.name : '???'}</div>
+                    <div class="achievement-item-desc">${a.desc}</div>
+                    <div class="achievement-item-xp">+${a.xp} XP</div>
+                </div>
+            `;
+            grid.appendChild(item);
+        });
+        
+        list.appendChild(grid);
+    });
+    
+    showView('achievementsView');
+}
+
+// ============================================
+// 🎯 LANCEUR
 // ============================================
 function startGame(gameId) {
+    // Vérifier sauvegarde
+    if (hasGameState(gameId)) {
+        const save = loadGameState(gameId);
+        const resume = confirm(
+            '💾 PARTIE EN COURS DÉTECTÉE\n\n' +
+            `Score : ${save.score || 0}\n` +
+            `Niveau : ${save.level || 1}\n\n` +
+            'REPRENDRE la partie ?\n(Annuler = nouvelle partie)'
+        );
+        
+        if (!resume) {
+            deleteGameState(gameId);
+        }
+    }
+    
     switch (gameId) {
         case 'asteroids': startAsteroidsGame(); break;
         case 'paddle': startPaddleGame(); break;
@@ -133,6 +209,7 @@ function startGame(gameId) {
 }
 
 function restartGame(gameId) {
+    deleteGameState(gameId);
     const map = {
         asteroids: 'asteroidsGameOver',
         paddle: 'paddleGameOver',
@@ -163,22 +240,24 @@ function quitToMenu(gameId) {
 }
 
 // ============================================
-// ⏱ COMPTE À REBOURS (3, 2, 1, GO!)
+// ⏱ COMPTE À REBOURS
 // ============================================
 function showCountdown(gameId, callback) {
     const el = document.getElementById(`${gameId}Countdown`);
     if (!el) {
-        // Pas d'élément countdown → appeler directement
         if (callback) callback();
         return;
     }
     
     el.classList.add('active');
+    el.classList.remove('pop');
     
     let count = 3;
     el.textContent = count;
-    playBeep(400, 0.15, 'square', 0.15);
-    vibrate(30);
+    void el.offsetWidth;
+    el.classList.add('pop');
+    if (typeof playBeep === 'function') playBeep(400, 0.15, 'square', 0.15);
+    if (typeof vibrate === 'function') vibrate(30);
     
     const interval = setInterval(() => {
         count--;
@@ -188,15 +267,15 @@ function showCountdown(gameId, callback) {
             el.classList.remove('pop');
             void el.offsetWidth;
             el.classList.add('pop');
-            playBeep(400, 0.15, 'square', 0.15);
-            vibrate(30);
+            if (typeof playBeep === 'function') playBeep(400, 0.15, 'square', 0.15);
+            if (typeof vibrate === 'function') vibrate(30);
         } else if (count === 0) {
             el.textContent = 'GO !';
             el.classList.remove('pop');
             void el.offsetWidth;
             el.classList.add('pop');
-            playBeep(800, 0.3, 'square', 0.2);
-            vibrate(60);
+            if (typeof playBeep === 'function') playBeep(800, 0.3, 'square', 0.2);
+            if (typeof vibrate === 'function') vibrate(60);
         } else {
             clearInterval(interval);
             el.classList.remove('active');
@@ -204,13 +283,4 @@ function showCountdown(gameId, callback) {
             if (callback) callback();
         }
     }, 800);
-}
-
-// Fonction vibrate (fallback si pas chargée)
-if (typeof vibrate !== 'function') {
-    window.vibrate = function(duration) {
-        if (navigator.vibrate && typeof IS_TOUCH !== 'undefined' && IS_TOUCH) {
-            try { navigator.vibrate(duration); } catch (e) {}
-        }
-    };
 }

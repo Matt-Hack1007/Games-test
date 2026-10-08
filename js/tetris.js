@@ -1,5 +1,5 @@
 // ============================================
-// 🧱 TETRIS
+// 🧱 TETRIS (avec sauvegarde + achievements)
 // ============================================
 var teCanvas, teCtx, teW, teH, teGridSize = 30, teCols = 10, teRows = 20;
 var teOffsetX = 0, teOffsetY = 0;
@@ -93,6 +93,7 @@ function teInit() {
     teGame.level = 1;
     teGame.lines = 0;
     teGame.gameOver = false;
+    teGame._lastSave = 0;
     teBoard = [];
     for (let r = 0; r < teRows; r++) teBoard.push(new Array(teCols).fill(null));
     teCurrent = teCreatePiece();
@@ -123,6 +124,16 @@ function startTetrisGame() {
     setTimeout(() => {
         teResize();
         teInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('tetris') : null;
+        if (savedState && savedState.score > 0) {
+            teGame.score = savedState.score || 0;
+            teGame.level = savedState.level || 1;
+            teGame.lines = savedState.lines || 0;
+            teUpdateHUD();
+            console.log('💾 Sauvegarde Tetris chargée:', savedState);
+        }
+        
         if (teGameLoopId) cancelAnimationFrame(teGameLoopId);
         teRenderLoop();
         showCountdown('tetris', () => {
@@ -217,6 +228,13 @@ function teClearLines() {
         teGame.level = 1 + Math.floor(teGame.lines / 10);
         teUpdateHUD();
         playPickup();
+        
+        if (typeof unlockAchievement === 'function') {
+            if (cleared >= 1) unlockAchievement('tetris_1line');
+            if (cleared >= 4) unlockAchievement('tetris_4lines');
+            if (teGame.lines >= 10) unlockAchievement('tetris_10lines');
+        }
+        
         if (teGame.level > 0 && teGame.level % 5 === 0 && !teSpecialPatternShown) {
             const pattern = SPECIAL_PATTERNS[Math.floor(Math.random() * SPECIAL_PATTERNS.length)];
             const startRow = Math.floor((teRows - pattern.rows.length) / 2);
@@ -240,18 +258,53 @@ function teEndGame() {
     teGame.running = false;
     teGame.gameOver = true;
     playGameOver();
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('tetris', teGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('tetris');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('tetris', teGame.score, difficulties.tetris) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('tetris', teGame.score, 0);
+    
+    checkTetrisAchievements(teGame);
+    
     const fs = document.getElementById('tetrisFinalScore');
     const bs = document.getElementById('tetrisBestScore');
     const go = document.getElementById('tetrisGameOver');
     if (fs) fs.textContent = teGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('tetris');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.tetris.toUpperCase() + ') : ' + getBestScore('tetris', difficulties.tetris);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(teGame.score), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(teGame.score, 'tetris', difficulties.tetris), 800);
+    }
+}
+
+function checkTetrisAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.lines >= 1) unlockAchievement('tetris_1line');
+    if (game.lines >= 10) unlockAchievement('tetris_10lines');
+    if (game.score >= 1000) unlockAchievement('tetris_1000');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function teUpdate() {
     if (!teGame.running) return;
+    
+    if (typeof saveGameState === 'function') {
+        if (!teGame._lastSave || performance.now() - teGame._lastSave > 5000) {
+            teGame._lastSave = performance.now();
+            if (teGame.running && teGame.score > 0) {
+                saveGameState('tetris', {
+                    score: teGame.score,
+                    level: teGame.level,
+                    lines: teGame.lines
+                });
+            }
+        }
+    }
+    
     const now = performance.now();
     const interval = Math.max(100, teSettings.fallSpeed - (teGame.level - 1) * 50);
     if (now - teLastFall >= interval) {

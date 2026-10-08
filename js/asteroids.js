@@ -1,5 +1,5 @@
 // ============================================
-// ☄ ASTEROIDS
+// ☄ ASTEROIDS (avec sauvegarde + achievements)
 // ============================================
 var aCanvas, aCtx, aW, aH;
 var aSettings, aGame, aKeys, aShip;
@@ -78,6 +78,7 @@ function aInit() {
     aAsteroids = []; aBullets = []; aParticles = [];
     aGame.score = 0; aGame.lives = aSettings.lives;
     aGame.level = 1; aGame.gameOver = false;
+    aGame._lastSave = 0;
     aUpdateHUD();
     aSpawnWave(aSettings.asteroidCount);
 }
@@ -100,9 +101,20 @@ function startAsteroidsGame() {
     aGame.gameOver = false;
     const go = document.getElementById('asteroidsGameOver');
     if (go) go.classList.remove('active');
+    
     setTimeout(() => {
         aResize();
         aInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('asteroids') : null;
+        if (savedState && savedState.score > 0) {
+            aGame.score = savedState.score || 0;
+            aGame.level = savedState.level || 1;
+            aGame.lives = savedState.lives || aSettings.lives;
+            aUpdateHUD();
+            console.log('💾 Sauvegarde Asteroids chargée:', savedState);
+        }
+        
         if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
         aRenderLoop();
         showCountdown('asteroids', () => {
@@ -201,18 +213,53 @@ function aEndGame() {
     aGame.gameOver = true;
     stopThrustSound();
     playGameOver();
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('asteroids', aGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('asteroids');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('asteroids', aGame.score, difficulties.asteroids) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('asteroids', aGame.score, 0);
+    
+    checkAsteroidsAchievements(aGame);
+    
     const fs = document.getElementById('asteroidsFinalScore');
     const bs = document.getElementById('asteroidsBestScore');
     const go = document.getElementById('asteroidsGameOver');
     if (fs) fs.textContent = aGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('asteroids');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.asteroids.toUpperCase() + ') : ' + getBestScore('asteroids', difficulties.asteroids);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(aGame.score), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(aGame.score, 'asteroids', difficulties.asteroids), 800);
+    }
+}
+
+function checkAsteroidsAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 1000) unlockAchievement('asteroids_1000');
+    if (game.score >= 5000) unlockAchievement('asteroids_5000');
+    if (game.level >= 3) unlockAchievement('asteroids_level3');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function aUpdate() {
     if (!aGame.running) return;
+    
+    if (typeof saveGameState === 'function') {
+        if (!aGame._lastSave || performance.now() - aGame._lastSave > 5000) {
+            aGame._lastSave = performance.now();
+            if (aGame.running && aGame.score > 0) {
+                saveGameState('asteroids', {
+                    score: aGame.score,
+                    lives: aGame.lives,
+                    level: aGame.level
+                });
+            }
+        }
+    }
+    
     if (aShip.hyperCooldown > 0) aShip.hyperCooldown--;
     if (aShip.invulnerable > 0) aShip.invulnerable--;
     if (aKeys.ArrowLeft) aShip.angle -= 0.06;

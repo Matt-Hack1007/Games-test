@@ -1,11 +1,12 @@
 // ============================================
-// 🟡 PAC-MAN
+// 🟡 PAC-MAN (avec sauvegarde + achievements)
 // ============================================
 var pacCanvas, pacCtx, pacW, pacH, pacGridSize, pacOffsetX, pacOffsetY;
 var pacCurrentSettings, pacGame, pacPlayer;
 var pacGhosts = [], pacDots = [];
 var pacSuperTimer = 0, pacParticles = [];
 var pacGameLoopId = null, pacLastFrame = 0, pacDeathAnim = 0;
+var pacGhostsEatenThisSuper = 0;
 
 const PACMAN_MAZE = [
     "1111111111111111111",
@@ -112,10 +113,12 @@ function pacInit() {
     pacGame.level = 1;
     pacGame.gameOver = false;
     pacGame.paused = false;
+    pacGame._lastSave = 0;
     pacSuperTimer = 0;
     pacParticles = [];
     pacGhosts = [];
     pacDeathAnim = 0;
+    pacGhostsEatenThisSuper = 0;
     pacCurrentSettings = pacSettings[difficulties.pacman];
     pacPlayer.x = 9;
     pacPlayer.y = 13;
@@ -310,6 +313,7 @@ function pacCheckCollisions() {
             if (dot.type === 'super') {
                 pacGame.score += 50;
                 pacSuperTimer = pacCurrentSettings.superDuration;
+                pacGhostsEatenThisSuper = 0;
                 playBeep(1200, 0.2, 'square', 0.15);
                 for (const g of pacGhosts) {
                     if (g.state !== 'eaten' && g.state !== 'waiting') {
@@ -331,8 +335,17 @@ function pacCheckCollisions() {
             if (ghost.state === 'frightened') {
                 ghost.state = 'eaten';
                 pacGame.score += 200;
+                pacGhostsEatenThisSuper++;
                 pacUpdateHUD();
                 playPickup();
+                
+                if (typeof unlockAchievement === 'function') {
+                    unlockAchievement('pacman_ghost');
+                    if (pacGhostsEatenThisSuper >= 4) {
+                        unlockAchievement('pacman_4ghosts');
+                    }
+                }
+                
                 for (let i = 0; i < 12; i++) {
                     pacParticles.push({
                         x: (ghost.x * pacGridSize + pacOffsetX + pacGridSize / 2),
@@ -391,6 +404,10 @@ function pacLoseLife() {
 }
 
 function pacNextLevel() {
+    if (typeof unlockAchievement === 'function') {
+        unlockAchievement('pacman_all_dots');
+    }
+    
     pacGame.level++;
     pacGame.score += 500;
     pacUpdateHUD();
@@ -410,14 +427,33 @@ function pacEndGame() {
     pacGame.running = false;
     pacGame.gameOver = true;
     playGameOver();
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('pacman', pacGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('pacman');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('pacman', pacGame.score, difficulties.pacman) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('pacman', pacGame.score, 0);
+    
+    checkPacmanAchievements(pacGame);
+    
     const fs = document.getElementById('pacmanFinalScore');
     const bs = document.getElementById('pacmanBestScore');
     const go = document.getElementById('pacmanGameOver');
     if (fs) fs.textContent = pacGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('pacman');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.pacman.toUpperCase() + ') : ' + getBestScore('pacman', difficulties.pacman);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(pacGame.score), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(pacGame.score, 'pacman', difficulties.pacman), 800);
+    }
+}
+
+function checkPacmanAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 1000) unlockAchievement('pacman_1000');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function startPacmanGame() {
@@ -432,6 +468,16 @@ function startPacmanGame() {
     setTimeout(() => {
         pacResize();
         pacInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('pacman') : null;
+        if (savedState && savedState.score > 0) {
+            pacGame.score = savedState.score || 0;
+            pacGame.level = savedState.level || 1;
+            pacGame.lives = savedState.lives || 3;
+            pacUpdateHUD();
+            console.log('💾 Sauvegarde Pac-Man chargée:', savedState);
+        }
+        
         if (pacGameLoopId) cancelAnimationFrame(pacGameLoopId);
         pacLastFrame = performance.now();
         pacRenderLoop();
@@ -459,6 +505,20 @@ function pacUpdate(dt) {
         pacDeathAnim = Math.max(0, pacDeathAnim - 0.02);
         return;
     }
+    
+    if (typeof saveGameState === 'function') {
+        if (!pacGame._lastSave || performance.now() - pacGame._lastSave > 5000) {
+            pacGame._lastSave = performance.now();
+            if (pacGame.running && pacGame.score > 0) {
+                saveGameState('pacman', {
+                    score: pacGame.score,
+                    lives: pacGame.lives,
+                    level: pacGame.level
+                });
+            }
+        }
+    }
+    
     pacMovePlayer(dt);
     pacMoveGhosts(dt);
     pacCheckCollisions();

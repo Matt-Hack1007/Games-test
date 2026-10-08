@@ -1,5 +1,5 @@
 // ============================================
-// 🐦 FLAPPY
+// 🐦 FLAPPY (avec sauvegarde + achievements)
 // ============================================
 var fCanvas, fCtx, fW, fH;
 var fSettings, fGame, fKeys, fBird;
@@ -58,7 +58,8 @@ function fInit() {
     fGame.score = 0;
     fGame.level = 1;
     fGame.gameOver = false;
-    fGame.best = (typeof getBestScore === 'function') ? getBestScore('flappy') : 0;
+    fGame.best = (typeof getBestScore === 'function') ? getBestScore('flappy', difficulties.flappy) : 0;
+    fGame._lastSave = 0;
     fBird.x = fW * 0.25;
     fBird.y = fH / 2;
     fBird.vy = 0;
@@ -105,6 +106,15 @@ function startFlappyGame() {
     setTimeout(() => {
         fResize();
         fInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('flappy') : null;
+        if (savedState && savedState.score > 0) {
+            fGame.score = savedState.score || 0;
+            fGame.level = savedState.level || 1;
+            fUpdateHUD();
+            console.log('💾 Sauvegarde Flappy chargée:', savedState);
+        }
+        
         if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
         fRenderLoop();
         showCountdown('flappy', () => {
@@ -147,6 +157,19 @@ function fUpdate() {
         fGroundOffset = (fGroundOffset + 2) % 40;
         return;
     }
+    
+    if (typeof saveGameState === 'function') {
+        if (!fGame._lastSave || performance.now() - fGame._lastSave > 5000) {
+            fGame._lastSave = performance.now();
+            if (fGame.running && fGame.score > 0) {
+                saveGameState('flappy', {
+                    score: fGame.score,
+                    level: fGame.level
+                });
+            }
+        }
+    }
+    
     fBird.vy += fSettings.gravity;
     fBird.y += fBird.vy;
     fBird.rotation = Math.max(-0.5, Math.min(Math.PI / 2, fBird.vy * 0.08));
@@ -195,14 +218,35 @@ function fEndGame() {
     fGame.gameOver = true;
     playExplosion();
     setTimeout(playGameOver, 300);
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('flappy', fGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('flappy');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('flappy', fGame.score, difficulties.flappy) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('flappy', fGame.score, 0);
+    
+    checkFlappyAchievements(fGame);
+    
     const fs = document.getElementById('flappyFinalScore');
     const bs = document.getElementById('flappyBestScore');
     const go = document.getElementById('flappyGameOver');
     if (fs) fs.textContent = fGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('flappy');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.flappy.toUpperCase() + ') : ' + getBestScore('flappy', difficulties.flappy);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(fGame.score), 1200);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(fGame.score, 'flappy', difficulties.flappy), 1200);
+    }
+}
+
+function checkFlappyAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 10) unlockAchievement('flappy_10');
+    if (game.score >= 30) unlockAchievement('flappy_30');
+    if (game.score >= 50) unlockAchievement('flappy_50');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function fDraw() {

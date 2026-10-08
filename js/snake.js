@@ -1,5 +1,5 @@
 // ============================================
-// 🐍 SNAKE
+// 🐍 SNAKE (avec sauvegarde + achievements)
 // ============================================
 var sCanvas, sCtx, sW, sH, sGridSize = 24, sCols, sRows;
 var sSettings, sGame, sKeys;
@@ -34,7 +34,6 @@ function initSnake() {
             if (sCanvas && document.getElementById('snakeGameView')?.classList.contains('active')) {
                 sResize();
                 if (sSnake.length > 0) {
-                    // Repositionner le serpent au centre
                     const centerX = Math.floor(sCols / 2);
                     const centerY = Math.floor(sRows / 2);
                     for (let i = 0; i < sSnake.length; i++) {
@@ -73,6 +72,7 @@ function sInit() {
     sGame.level = 1;
     sGame.gameOver = false;
     sGame.paused = false;
+    sGame._lastSave = 0;
     sSnake = [];
     const startX = Math.floor(sCols / 2);
     const startY = Math.floor(sRows / 2);
@@ -118,6 +118,18 @@ function startSnakeGame() {
     setTimeout(() => {
         sResize();
         sInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('snake') : null;
+        if (savedState && savedState.score > 0) {
+            sGame.score = savedState.score || 0;
+            sGame.level = savedState.level || 1;
+            if (savedState.snake && Array.isArray(savedState.snake)) {
+                sSnake = savedState.snake;
+            }
+            sUpdateHUD();
+            console.log('💾 Sauvegarde Snake chargée:', savedState);
+        }
+        
         if (sGameLoopId) cancelAnimationFrame(sGameLoopId);
         sRenderLoop();
         showCountdown('snake', () => {
@@ -156,6 +168,9 @@ function sTick() {
         sSpawnApple();
         sUpdateHUD();
         playPickup();
+        if (sSnake.length >= 20 && typeof unlockAchievement === 'function') {
+            unlockAchievement('snake_length20');
+        }
     } else {
         sSnake.pop();
     }
@@ -166,18 +181,53 @@ function sEndGame() {
     sGame.gameOver = true;
     playExplosion();
     setTimeout(playGameOver, 300);
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('snake', sGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('snake');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('snake', sGame.score, difficulties.snake) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('snake', sGame.score, 0);
+    
+    checkSnakeAchievements(sGame, sSnake.length);
+    
     const fs = document.getElementById('snakeFinalScore');
     const bs = document.getElementById('snakeBestScore');
     const go = document.getElementById('snakeGameOver');
     if (fs) fs.textContent = sGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('snake');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.snake.toUpperCase() + ') : ' + getBestScore('snake', difficulties.snake);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(sGame.score), 1200);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(sGame.score, 'snake', difficulties.snake), 1200);
+    }
+}
+
+function checkSnakeAchievements(game, length) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 100) unlockAchievement('snake_100');
+    if (game.score >= 500) unlockAchievement('snake_500');
+    if (length >= 20) unlockAchievement('snake_length20');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function sUpdate() {
     if (!sGame.running || sGame.paused) return;
+    
+    if (typeof saveGameState === 'function') {
+        if (!sGame._lastSave || performance.now() - sGame._lastSave > 5000) {
+            sGame._lastSave = performance.now();
+            if (sGame.running && sGame.score > 0) {
+                saveGameState('snake', {
+                    score: sGame.score,
+                    level: sGame.level,
+                    snake: sSnake.map(s => ({ x: s.x, y: s.y }))
+                });
+            }
+        }
+    }
+    
     const now = performance.now();
     const interval = sSettings.tickRate - Math.min(sGame.level * 5, 60);
     if (now - sLastTick >= interval) {

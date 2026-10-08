@@ -1,11 +1,12 @@
 // ============================================
-// 🏓 PADDLE
+// 🏓 PADDLE (avec sauvegarde + achievements)
 // ============================================
 var pCanvas, pCtx, pW, pH;
 var pSettings, pGame, pKeys, pPaddle, pBall;
 var pBricks = [], pParticles = [], pPowerUps = [], pBallMulti = [];
 var pPaddleWideTimer = 0, pPaddleSlowTimer = 0;
 var pGameLoopId = null;
+var pPowerUpsCollected = {};
 
 const paddleDiffSettings = {
     easy:   { ballSpeed: 5, paddleWidth: 160, lives: 5, rows: 4 },
@@ -72,6 +73,7 @@ function pInit() {
     pResize();
     pGame.score = 0; pGame.lives = pSettings.lives;
     pGame.level = 1; pGame.gameOver = false;
+    pGame._lastSave = 0;
     pPaddle.baseWidth = pSettings.paddleWidth;
     pPaddle.width = Math.min(pPaddle.baseWidth, pW * 0.35);
     pPaddle.x = pW / 2 - pPaddle.width / 2;
@@ -81,6 +83,7 @@ function pInit() {
     pResetBall();
     pParticles = []; pPowerUps = []; pBallMulti = [];
     pPaddleWideTimer = 0; pPaddleSlowTimer = 0;
+    pPowerUpsCollected = {};
     pCreateBricks();
     pUpdateHUD();
 }
@@ -108,16 +111,9 @@ function pCreateBricks() {
     let cols = P_BRICK_COLS;
     let brickPadding = P_BRICK_PADDING;
     
-    if (isSmallLandscape) {
-        cols = 8;
-        brickPadding = 6;
-    } else if (pW < 500) {
-        cols = 8;
-        brickPadding = 6;
-    } else if (pW < 350) {
-        cols = 6;
-        brickPadding = 5;
-    }
+    if (isSmallLandscape) { cols = 8; brickPadding = 6; }
+    else if (pW < 500) { cols = 8; brickPadding = 6; }
+    else if (pW < 350) { cols = 6; brickPadding = 5; }
     
     const totalPad = brickPadding * (cols + 1);
     const bw = (pW - totalPad) / cols;
@@ -181,9 +177,20 @@ function startPaddleGame() {
     if (go) go.classList.remove('active');
     const got = document.getElementById('paddleGameOverTitle');
     if (got) got.classList.remove('win');
+    
     setTimeout(() => {
         pResize();
         pInit();
+        
+        const savedState = (typeof loadGameState === 'function') ? loadGameState('paddle') : null;
+        if (savedState && savedState.score > 0) {
+            pGame.score = savedState.score || 0;
+            pGame.level = savedState.level || 1;
+            pGame.lives = savedState.lives || pSettings.lives;
+            pUpdateHUD();
+            console.log('💾 Sauvegarde Paddle chargée:', savedState);
+        }
+        
         if (pGameLoopId) cancelAnimationFrame(pGameLoopId);
         pRenderLoop();
         showCountdown('paddle', () => {
@@ -214,6 +221,20 @@ function pUpdate() {
         }
         return;
     }
+    
+    if (typeof saveGameState === 'function') {
+        if (!pGame._lastSave || performance.now() - pGame._lastSave > 5000) {
+            pGame._lastSave = performance.now();
+            if (pGame.running && pGame.score > 0) {
+                saveGameState('paddle', {
+                    score: pGame.score,
+                    lives: pGame.lives,
+                    level: pGame.level
+                });
+            }
+        }
+    }
+    
     pMovePaddle();
     pBall.x += pBall.vx; pBall.y += pBall.vy;
     if (pBall.x - pBall.radius < 0) { pBall.x = pBall.radius; pBall.vx = -pBall.vx; }
@@ -286,6 +307,11 @@ function pMovePaddle() {
 
 function applyPowerUp(powerUp) {
     playPickup();
+    pPowerUpsCollected[powerUp.type] = true;
+    if (Object.keys(pPowerUpsCollected).length >= 4) {
+        if (typeof unlockAchievement === 'function') unlockAchievement('paddle_all_bonus');
+    }
+    
     switch (powerUp.type) {
         case 'WIDE':
             pPaddle.width = Math.min(pPaddle.baseWidth * 1.6, pW * 0.5);
@@ -391,6 +417,10 @@ function pLoseLife() {
 }
 
 function pNextLevel() {
+    if (pGame.lives === pSettings.lives) {
+        if (typeof unlockAchievement === 'function') unlockAchievement('paddle_perfect');
+    }
+    
     pGame.level++;
     pGame.score += 100;
     pUpdateHUD();
@@ -408,14 +438,33 @@ function pEndGame() {
     pGame.running = false;
     pGame.gameOver = true;
     playGameOver();
-    const isNewRecord = (typeof updateRecord === 'function') ? updateRecord('paddle', pGame.score) : false;
+    
+    if (typeof deleteGameState === 'function') deleteGameState('paddle');
+    
+    const isNewRecord = (typeof updateRecord === 'function') 
+        ? updateRecord('paddle', pGame.score, difficulties.paddle) 
+        : false;
+    if (typeof incrementStat === 'function') incrementStat('paddle', pGame.score, 0);
+    
+    checkPaddleAchievements(pGame);
+    
     const fs = document.getElementById('paddleFinalScore');
     const bs = document.getElementById('paddleBestScore');
     const go = document.getElementById('paddleGameOver');
     if (fs) fs.textContent = pGame.score;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 RECORD : ' + getBestScore('paddle');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 RECORD (' + difficulties.paddle.toUpperCase() + ') : ' + getBestScore('paddle', difficulties.paddle);
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(pGame.score), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(pGame.score, 'paddle', difficulties.paddle), 800);
+    }
+}
+
+function checkPaddleAchievements(game) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (game.score >= 1000) unlockAchievement('paddle_1000');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function pDraw() {

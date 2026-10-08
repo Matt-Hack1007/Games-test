@@ -1,5 +1,5 @@
 // ============================================
-// 🎾 TENNIS
+// 🎾 TENNIS (avec achievements)
 // ============================================
 var tCanvas, tCtx, tW, tH;
 var tSettings, tGame, tKeys, tPaddle1, tPaddle2, tBall;
@@ -62,6 +62,7 @@ function tInit() {
     tResize();
     tGame.score1 = 0; tGame.score2 = 0;
     tGame.gameOver = false; tGame.serving = true; tGame.server = 1;
+    tGame._lastSave = 0;
     tPaddle1.width = 14; tPaddle1.height = tSettings.paddleHeight;
     tPaddle1.x = 30; tPaddle1.y = tH / 2 - tPaddle1.height / 2;
     tPaddle1.speed = tSettings.paddleSpeed;
@@ -245,6 +246,7 @@ function tEndGame() {
     tGame.running = false;
     tGame.gameOver = true;
     playGameOver();
+    
     const title = document.getElementById('tennisGameOverTitle');
     const winner = tGame.score1 >= tSettings.targetScore ? 1 : 2;
     if (title) {
@@ -253,16 +255,33 @@ function tEndGame() {
         if (winner === 1) title.classList.add('win');
         else title.classList.remove('win');
     }
+    
     const isNewRecord = tennisMode === 'ai' && winner === 1 
-        ? ((typeof updateRecord === 'function') ? updateRecord('tennis', (getBestScore('tennis') || 0) + 1) : false)
+        ? ((typeof updateRecord === 'function') ? updateRecord('tennis', (getBestScore('tennis', 'normal') || 0) + 1, 'normal') : false)
         : false;
+    if (typeof incrementStat === 'function') incrementStat('tennis', winner === 1 ? 1 : 0, 0);
+    
+    checkTennisAchievements(winner, tGame.score1, tGame.score2);
+    
     const fs = document.getElementById('tennisFinalScore');
     const bs = document.getElementById('tennisBestScore');
     const go = document.getElementById('tennisGameOver');
     if (fs) fs.textContent = tGame.score1 + ' - ' + tGame.score2;
-    if (bs && typeof getBestScore === 'function') bs.textContent = '🏆 VICTOIRES : ' + getBestScore('tennis');
+    if (bs && typeof getBestScore === 'function') {
+        bs.textContent = '🏆 VICTOIRES : ' + getBestScore('tennis', 'normal');
+    }
     if (go) go.classList.add('active');
-    if (isNewRecord && typeof showNewRecordPopup === 'function') setTimeout(() => showNewRecordPopup(getBestScore('tennis')), 800);
+    if (isNewRecord && typeof showNewRecordPopup === 'function') {
+        setTimeout(() => showNewRecordPopup(getBestScore('tennis', 'normal'), 'tennis', 'normal'), 800);
+    }
+}
+
+function checkTennisAchievements(winner, s1, s2) {
+    if (typeof unlockAchievement !== 'function') return;
+    if (winner === 1) unlockAchievement('tennis_win');
+    if (winner === 1 && difficulties.tennis === 'hard') unlockAchievement('tennis_hard_win');
+    if (winner === 1 && s2 === 0 && s1 >= 5) unlockAchievement('tennis_perfect');
+    if (typeof checkGamePlayedAchievements === 'function') checkGamePlayedAchievements();
 }
 
 function tDraw() {
