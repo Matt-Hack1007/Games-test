@@ -1,5 +1,5 @@
 // ============================================
-// 🐦 FLAPPY (avec sauvegarde + achievements)
+// 🐦 FLAPPY (avec sauvegarde + achievements + pause)
 // ============================================
 var fCanvas, fCtx, fW, fH;
 var fSettings, fGame, fKeys, fBird;
@@ -21,7 +21,7 @@ function initFlappy() {
     }
     fCtx = fCanvas.getContext('2d');
     fSettings = flappyDiffSettings.normal;
-    fGame = { score: 0, level: 1, best: 0, running: false, gameOver: false };
+    fGame = { score: 0, level: 1, best: 0, running: false, gameOver: false, paused: false };
     fKeys = { Space: false };
     fBird = { x: 0, y: 0, vy: 0, width: 34, height: 24, rotation: 0 };
     fPipes = []; fParticles = [];
@@ -58,6 +58,7 @@ function fInit() {
     fGame.score = 0;
     fGame.level = 1;
     fGame.gameOver = false;
+    fGame.paused = false;
     fGame.best = (typeof getBestScore === 'function') ? getBestScore('flappy', difficulties.flappy) : 0;
     fGame._lastSave = 0;
     fBird.x = fW * 0.25;
@@ -101,6 +102,7 @@ function startFlappyGame() {
     if (gv) gv.classList.add('active');
     fGame.running = false;
     fGame.gameOver = false;
+    fGame.paused = false;
     const go = document.getElementById('flappyGameOver');
     if (go) go.classList.remove('active');
     setTimeout(() => {
@@ -127,6 +129,7 @@ function startFlappyGame() {
 function quitToFlappyMenu() {
     fGame.running = false;
     fGame.gameOver = false;
+    fGame.paused = false;
     if (fGameLoopId) cancelAnimationFrame(fGameLoopId);
     fGameLoopId = null;
     const go = document.getElementById('flappyGameOver');
@@ -138,6 +141,7 @@ function quitToFlappyMenu() {
 
 function fJump() {
     if (!fGame.running) return;
+    if (fGame.paused) return;
     fBird.vy = fSettings.jumpForce;
     playBeep(880, 0.05, 'square', 0.08);
     for (let i = 0; i < 4; i++) {
@@ -157,6 +161,9 @@ function fUpdate() {
         fGroundOffset = (fGroundOffset + 2) % 40;
         return;
     }
+    
+    // ⏸ Pause
+    if (fGame.paused) return;
     
     if (typeof saveGameState === 'function') {
         if (!fGame._lastSave || performance.now() - fGame._lastSave > 5000) {
@@ -216,6 +223,7 @@ function fUpdate() {
 function fEndGame() {
     fGame.running = false;
     fGame.gameOver = true;
+    fGame.paused = false;
     playExplosion();
     setTimeout(playGameOver, 300);
     

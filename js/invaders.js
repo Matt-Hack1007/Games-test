@@ -1,5 +1,5 @@
 // ============================================
-// 👾 INVADERS (avec sauvegarde + achievements)
+// 👾 INVADERS (avec sauvegarde + achievements + pause)
 // ============================================
 var iCanvas, iCtx, iW, iH;
 var iSettings, iGame, iKeys, iPlayer;
@@ -26,7 +26,7 @@ function initInvaders() {
     }
     iCtx = iCanvas.getContext('2d');
     iSettings = invadersDiffSettings.normal;
-    iGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false };
+    iGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false, paused: false };
     iKeys = { ArrowLeft: false, ArrowRight: false, Space: false };
     iPlayer = { x: 0, y: 0, width: 40, height: 24, speed: 6 };
     iInvaders = []; iBullets = []; iInvaderBullets = []; iParticles = [];
@@ -65,6 +65,7 @@ function iInit() {
     iGame.lives = iSettings.lives;
     iGame.level = 1;
     iGame.gameOver = false;
+    iGame.paused = false;
     iGame._lastSave = 0;
     iPlayer.width = 40; iPlayer.height = 24;
     iPlayer.speed = iSettings.playerSpeed;
@@ -110,6 +111,7 @@ function startInvadersGame() {
     if (gv) gv.classList.add('active');
     iGame.running = false;
     iGame.gameOver = false;
+    iGame.paused = false;
     const go = document.getElementById('invadersGameOver');
     if (go) go.classList.remove('active');
     setTimeout(() => {
@@ -136,6 +138,7 @@ function startInvadersGame() {
 function quitToInvadersMenu() {
     iGame.running = false;
     iGame.gameOver = false;
+    iGame.paused = false;
     if (iGameLoopId) cancelAnimationFrame(iGameLoopId);
     iGameLoopId = null;
     const go = document.getElementById('invadersGameOver');
@@ -148,6 +151,7 @@ function quitToInvadersMenu() {
 function iShoot() {
     if (iShootCooldown > 0) return;
     if (!iGame.running) return;
+    if (iGame.paused) return;
     iShootCooldown = 12;
     playShoot();
     iBullets.push({ x: iPlayer.x + iPlayer.width / 2, y: iPlayer.y, vy: -iSettings.bulletSpeed });
@@ -155,6 +159,9 @@ function iShoot() {
 
 function iUpdate() {
     if (!iGame.running) return;
+    
+    // ⏸ Pause
+    if (iGame.paused) return;
     
     if (typeof saveGameState === 'function') {
         if (!iGame._lastSave || performance.now() - iGame._lastSave > 5000) {
@@ -306,6 +313,7 @@ function iDestroyPlayer() {
 function iEndGame() {
     iGame.running = false;
     iGame.gameOver = true;
+    iGame.paused = false;
     playGameOver();
     
     if (typeof deleteGameState === 'function') deleteGameState('invaders');

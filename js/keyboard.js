@@ -15,17 +15,36 @@ function handleKeyDown(e) {
     const pacA = document.getElementById('pacmanGameView')?.classList.contains('active');
     
     if (e.key === 'Escape') {
-        if (aA) quitToAsteroidsMenu();
-        else if (pA) quitToPaddleMenu();
-        else if (tA) quitToTennisMenu();
-        else if (iA) quitToInvadersMenu();
-        else if (sA) quitToSnakeMenu();
-        else if (teA) quitToTetrisMenu();
-        else if (fA) quitToFlappyMenu();
-        else if (pacA) quitToPacmanMenu();
-        else closeSettings();
+    // Si un menu pause est ouvert, Échap le ferme
+    const pauseOverlays = document.querySelectorAll('.pause-overlay.active');
+    if (pauseOverlays.length > 0) {
+        pauseOverlays.forEach(overlay => {
+            overlay.classList.remove('active');
+        });
+        // Reprendre tous les jeux en pause
+        if (typeof aGame !== 'undefined' && aGame) aGame.paused = false;
+        if (typeof pGame !== 'undefined' && pGame) pGame.paused = false;
+        if (typeof tGame !== 'undefined' && tGame) tGame.paused = false;
+        if (typeof iGame !== 'undefined' && iGame) iGame.paused = false;
+        if (typeof sGame !== 'undefined' && sGame) sGame.paused = false;
+        if (typeof teGame !== 'undefined' && teGame) teGame.paused = false;
+        if (typeof fGame !== 'undefined' && fGame) fGame.paused = false;
+        if (typeof pacGame !== 'undefined' && pacGame) pacGame.paused = false;
         return;
     }
+    
+    // Sinon comportement normal
+    if (aA) quitToAsteroidsMenu();
+    else if (pA) quitToPaddleMenu();
+    else if (tA) quitToTennisMenu();
+    else if (iA) quitToInvadersMenu();
+    else if (sA) quitToSnakeMenu();
+    else if (teA) quitToTetrisMenu();
+    else if (fA) quitToFlappyMenu();
+    else if (pacA) quitToPacmanMenu();
+    else closeSettings();
+    return;
+}
     
     if (aA) {
         if (e.key in aKeys) aKeys[e.key] = true;

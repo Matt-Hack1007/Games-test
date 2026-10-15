@@ -13,38 +13,27 @@ const GAME_INFO = {
     pacman:    { icon: '🟡', name: 'PAC-MAN' }
 };
 
-// ============================================
-// 🎉 POPUP NOUVEAU RECORD
-// ============================================
 function showNewRecordPopup(score, gameId, difficulty) {
     const popup = document.getElementById('newRecordPopup');
     const scoreEl = document.getElementById('newRecordScore');
     if (!popup || !scoreEl) return;
-    
     const diffLabel = difficulty ? ` (${difficulty.toUpperCase()})` : '';
     scoreEl.textContent = score + ' POINTS' + diffLabel;
     popup.classList.remove('active');
     void popup.offsetWidth;
     popup.classList.add('active');
-    
     if (typeof playRecordFanfare === 'function') playRecordFanfare();
     setTimeout(() => popup.classList.remove('active'), 2500);
 }
 
-// ============================================
-// 📋 ÉCRAN DES RECORDS
-// ============================================
 function showRecords() {
     const records = getRecords();
     const list = document.getElementById('recordsList');
     if (!list) return;
-    
     list.innerHTML = '';
-    
     Object.keys(GAME_INFO).forEach(gameId => {
         const info = GAME_INFO[gameId];
         const gameRecords = records[gameId] || {};
-        
         let easy = 0, normal = 0, hard = 0;
         if (typeof gameRecords === 'object') {
             easy = gameRecords.easy || 0;
@@ -53,7 +42,6 @@ function showRecords() {
         } else {
             normal = gameRecords || 0;
         }
-        
         const item = document.createElement('div');
         item.className = 'record-item record-item-multi';
         item.innerHTML = `
@@ -76,7 +64,6 @@ function showRecords() {
         `;
         list.appendChild(item);
     });
-    
     showView('recordsView');
 }
 
@@ -88,30 +75,23 @@ function resetRecords() {
     }
 }
 
-// ============================================
-// 📊 ÉCRAN DES STATISTIQUES
-// ============================================
 function showStats() {
     const stats = getStats();
     const profile = getProfile();
     const container = document.getElementById('statsContainer');
     if (!container) return;
-    
     const totalMinutes = Math.floor(stats.totalPlaytime / 60);
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
-    
     let playtimeStr = '';
     if (totalHours > 0) playtimeStr = `${totalHours}h ${remainingMinutes}min`;
     else if (totalMinutes > 0) playtimeStr = `${totalMinutes}min`;
     else playtimeStr = '0min';
-    
     let firstPlayStr = 'Jamais';
     if (stats.firstPlayDate) {
         const d = new Date(stats.firstPlayDate);
         firstPlayStr = d.toLocaleDateString('fr-FR');
     }
-    
     let gamesList = '';
     Object.keys(GAME_INFO).forEach(gameId => {
         const count = stats.gamesPlayed[gameId] || 0;
@@ -123,7 +103,6 @@ function showStats() {
             </div>
         `;
     });
-    
     container.innerHTML = `
         <div class="stat-card">
             <div class="stat-icon">👤</div>
@@ -133,7 +112,6 @@ function showStats() {
                 <div class="stat-sub">Niveau ${profile.level} • ${profile.xp % 1000}/1000 XP</div>
             </div>
         </div>
-        
         <div class="stat-card">
             <div class="stat-icon">🎮</div>
             <div class="stat-content">
@@ -142,7 +120,6 @@ function showStats() {
                 <div class="stat-sub">Depuis le ${firstPlayStr}</div>
             </div>
         </div>
-        
         <div class="stat-card">
             <div class="stat-icon">⏱️</div>
             <div class="stat-content">
@@ -150,7 +127,6 @@ function showStats() {
                 <div class="stat-value">${playtimeStr}</div>
             </div>
         </div>
-        
         <div class="stat-card">
             <div class="stat-icon">🏆</div>
             <div class="stat-content">
@@ -158,29 +134,23 @@ function showStats() {
                 <div class="stat-value">${stats.totalScore.toLocaleString('fr-FR')}</div>
             </div>
         </div>
-        
         <div class="stat-card">
             <div class="stat-icon">📊</div>
             <div class="stat-content">
                 <div class="stat-label">PARTIES PAR JEU</div>
-                <div style="margin-top:0.5rem;">
-                    ${gamesList}
-                </div>
+                <div style="margin-top:0.5rem;">${gamesList}</div>
             </div>
         </div>
     `;
-    
     showView('statsView');
 }
 
-// ============================================
-// ⚙ PARAMÈTRES
-// ============================================
 function openSettings() {
     if (typeof playBeep === 'function') playBeep(600, 0.05);
-    const modal = document.getElementById('settingsModal');
-    if (modal) modal.classList.add('active');
-    
+    setTimeout(() => {
+        const modal = document.getElementById('settingsModal');
+        if (modal) modal.classList.add('active');
+    }, 50);
     const settings = getSettings();
     if (settings.volume !== undefined) {
         const slider = document.getElementById('volumeSlider');
@@ -193,7 +163,6 @@ function closeSettings() {
     if (typeof playBeep === 'function') playBeep(400, 0.05);
     const modal = document.getElementById('settingsModal');
     if (modal) modal.classList.remove('active');
-    
     const settings = getSettings();
     settings.volume = masterVolume;
     settings.sound = audioEnabled;
@@ -204,7 +173,6 @@ function closeSettings() {
 function toggleBtn(btn) {
     btn.classList.toggle('off');
     btn.textContent = btn.classList.contains('off') ? 'OFF' : 'ON';
-    
     const label = btn.previousElementSibling.textContent;
     if (label === 'SON') audioEnabled = !btn.classList.contains('off');
     else if (label === 'MUSIQUE') musicEnabled = !btn.classList.contains('off');
@@ -234,14 +202,13 @@ function resetAllDataConfirm(btn) {
     }
 }
 
-// ============================================
-// 🎬 INITIALISATION
-// ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('settingsModal');
     if (modal) {
         modal.addEventListener('click', function(e) {
-            if (e.target === this) closeSettings();
+            if (e.target === this) {
+                setTimeout(() => closeSettings(), 10);
+            }
         });
     }
     const volumeSlider = document.getElementById('volumeSlider');
@@ -251,3 +218,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+console.log('🏆 Système de records chargé');

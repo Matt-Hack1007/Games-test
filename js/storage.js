@@ -11,9 +11,6 @@ const STORAGE_KEYS = {
     PROFILE: 'arcade_io_profile_v1'
 };
 
-// ============================================
-// 🔧 FONCTIONS DE BASE
-// ============================================
 function storageRead(key, fallback = {}) {
     try {
         const data = localStorage.getItem(key);
@@ -40,9 +37,6 @@ function storageClear(key) {
     } catch (e) {}
 }
 
-// ============================================
-// 🏆 RECORDS PAR JEU ET DIFFICULTÉ
-// ============================================
 function getRecords() {
     return storageRead(STORAGE_KEYS.RECORDS, {});
 }
@@ -54,44 +48,29 @@ function saveRecords(records) {
 function getBestScore(gameId, difficulty = null) {
     const records = getRecords();
     const gameRecords = records[gameId];
-    
     if (!gameRecords) return 0;
-    
     if (typeof gameRecords === 'object') {
         if (difficulty) return gameRecords[difficulty] || 0;
-        return Math.max(
-            gameRecords.easy || 0,
-            gameRecords.normal || 0,
-            gameRecords.hard || 0
-        );
+        return Math.max(gameRecords.easy || 0, gameRecords.normal || 0, gameRecords.hard || 0);
     }
-    
     return gameRecords || 0;
 }
 
 function updateRecord(gameId, score, difficulty = 'normal') {
     if (score <= 0) return false;
-    
     const records = getRecords();
-    
     if (!records[gameId] || typeof records[gameId] !== 'object') {
         records[gameId] = { easy: 0, normal: 0, hard: 0 };
     }
-    
     const currentBest = records[gameId][difficulty] || 0;
-    
     if (score > currentBest) {
         records[gameId][difficulty] = score;
         saveRecords(records);
         return true;
     }
-    
     return false;
 }
 
-// ============================================
-// 💾 SAUVEGARDE DE PROGRESSION
-// ============================================
 function saveGameState(gameId, state) {
     const saves = storageRead(STORAGE_KEYS.SAVES, {});
     saves[gameId] = {
@@ -105,15 +84,12 @@ function saveGameState(gameId, state) {
 function loadGameState(gameId) {
     const saves = storageRead(STORAGE_KEYS.SAVES, {});
     const save = saves[gameId];
-    
     if (!save) return null;
-    
     const ONE_DAY = 24 * 60 * 60 * 1000;
     if (Date.now() - save.timestamp > ONE_DAY) {
         deleteGameState(gameId);
         return null;
     }
-    
     return save;
 }
 
@@ -131,9 +107,6 @@ function getAllSaves() {
     return storageRead(STORAGE_KEYS.SAVES, {});
 }
 
-// ============================================
-// 📊 STATISTIQUES
-// ============================================
 function getStats() {
     return storageRead(STORAGE_KEYS.STATS, {
         totalPlaytime: 0,
@@ -151,23 +124,15 @@ function saveStats(stats) {
 
 function incrementStat(gameId, scoreDelta = 0, timeDelta = 0) {
     const stats = getStats();
-    
     stats.totalGames++;
     stats.gamesPlayed[gameId] = (stats.gamesPlayed[gameId] || 0) + 1;
     stats.totalScore += scoreDelta;
     stats.totalPlaytime += timeDelta;
     stats.lastPlayDate = Date.now();
-    
-    if (!stats.firstPlayDate) {
-        stats.firstPlayDate = Date.now();
-    }
-    
+    if (!stats.firstPlayDate) stats.firstPlayDate = Date.now();
     saveStats(stats);
 }
 
-// ============================================
-// 👤 PROFIL JOUEUR
-// ============================================
 function getProfile() {
     return storageRead(STORAGE_KEYS.PROFILE, {
         name: 'PLAYER',
@@ -184,18 +149,13 @@ function saveProfile(profile) {
 function addXP(amount) {
     const profile = getProfile();
     profile.xp += amount;
-    
     const newLevel = Math.floor(profile.xp / 1000) + 1;
     const leveledUp = newLevel > profile.level;
     profile.level = newLevel;
-    
     saveProfile(profile);
     return leveledUp;
 }
 
-// ============================================
-// ⚙️ PARAMÈTRES
-// ============================================
 function getSettings() {
     return storageRead(STORAGE_KEYS.SETTINGS, {
         sound: true,
@@ -210,9 +170,6 @@ function saveSettings(settings) {
     storageWrite(STORAGE_KEYS.SETTINGS, settings);
 }
 
-// ============================================
-// 🗑 RESET
-// ============================================
 function resetAllData() {
     if (!confirm('⚠️ EFFACER TOUTES LES DONNÉES ?\n\nRecords, succès, sauvegardes et statistiques seront supprimés.')) {
         return false;

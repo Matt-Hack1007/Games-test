@@ -1,5 +1,5 @@
 // ============================================
-// 🎾 TENNIS (avec achievements)
+// 🎾 TENNIS (avec achievements + pause)
 // ============================================
 var tCanvas, tCtx, tW, tH;
 var tSettings, tGame, tKeys, tPaddle1, tPaddle2, tBall;
@@ -20,7 +20,7 @@ function initTennis() {
     }
     tCtx = tCanvas.getContext('2d');
     tSettings = tennisDiffSettings.normal;
-    tGame = { score1: 0, score2: 0, running: false, gameOver: false, serving: true, server: 1 };
+    tGame = { score1: 0, score2: 0, running: false, gameOver: false, serving: true, server: 1, paused: false };
     tKeys = { q: false, a: false, ArrowUp: false, ArrowDown: false, p: false, l: false, Space: false };
     tPaddle1 = { x: 0, y: 0, width: 14, height: 100, speed: 11 };
     tPaddle2 = { x: 0, y: 0, width: 14, height: 100, speed: 11 };
@@ -62,6 +62,7 @@ function tInit() {
     tResize();
     tGame.score1 = 0; tGame.score2 = 0;
     tGame.gameOver = false; tGame.serving = true; tGame.server = 1;
+    tGame.paused = false;
     tGame._lastSave = 0;
     tPaddle1.width = 14; tPaddle1.height = tSettings.paddleHeight;
     tPaddle1.x = 30; tPaddle1.y = tH / 2 - tPaddle1.height / 2;
@@ -106,6 +107,7 @@ function startTennisGame() {
     if (gv) gv.classList.add('active');
     tGame.running = false;
     tGame.gameOver = false;
+    tGame.paused = false;
     const go = document.getElementById('tennisGameOver');
     if (go) go.classList.remove('active');
     const controls = document.getElementById('tennisControls');
@@ -131,6 +133,7 @@ function startTennisGame() {
 function quitToTennisMenu() {
     tGame.running = false;
     tGame.gameOver = false;
+    tGame.paused = false;
     if (tGameLoopId) cancelAnimationFrame(tGameLoopId);
     tGameLoopId = null;
     const go = document.getElementById('tennisGameOver');
@@ -147,6 +150,10 @@ function tUpdate() {
         if (tennisMode === '2p') tMovePaddle2(); else tMoveAI();
         return;
     }
+    
+    // ⏸ Pause
+    if (tGame.paused) return;
+    
     tMovePaddle1();
     if (tennisMode === '2p') tMovePaddle2(); else tMoveAI();
     const speed = Math.hypot(tBall.vx, tBall.vy);
@@ -245,6 +252,7 @@ function tScorePoint(player) {
 function tEndGame() {
     tGame.running = false;
     tGame.gameOver = true;
+    tGame.paused = false;
     playGameOver();
     
     const title = document.getElementById('tennisGameOverTitle');

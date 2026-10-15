@@ -1,5 +1,5 @@
 // ============================================
-// ☄ ASTEROIDS (avec sauvegarde + achievements)
+// ☄ ASTEROIDS (avec sauvegarde + achievements + pause)
 // ============================================
 var aCanvas, aCtx, aW, aH;
 var aSettings, aGame, aKeys, aShip;
@@ -20,7 +20,7 @@ function initAsteroids() {
     }
     aCtx = aCanvas.getContext('2d');
     aSettings = asteroidsDiffSettings.normal;
-    aGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false };
+    aGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false, paused: false };
     aKeys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, Space: false };
     aShip = { x: 0, y: 0, vx: 0, vy: 0, angle: -Math.PI/2, radius: 14, thrusting: false, invulnerable: 0, hyperCooldown: 0 };
     aAsteroids = []; aBullets = []; aParticles = [];
@@ -77,7 +77,7 @@ function aInit() {
     aShip.invulnerable = 120; aShip.hyperCooldown = 0;
     aAsteroids = []; aBullets = []; aParticles = [];
     aGame.score = 0; aGame.lives = aSettings.lives;
-    aGame.level = 1; aGame.gameOver = false;
+    aGame.level = 1; aGame.gameOver = false; aGame.paused = false;
     aGame._lastSave = 0;
     aUpdateHUD();
     aSpawnWave(aSettings.asteroidCount);
@@ -99,6 +99,7 @@ function startAsteroidsGame() {
     if (gv) gv.classList.add('active');
     aGame.running = false;
     aGame.gameOver = false;
+    aGame.paused = false;
     const go = document.getElementById('asteroidsGameOver');
     if (go) go.classList.remove('active');
     
@@ -126,6 +127,7 @@ function startAsteroidsGame() {
 function quitToAsteroidsMenu() {
     aGame.running = false;
     aGame.gameOver = false;
+    aGame.paused = false;
     stopThrustSound();
     if (aGameLoopId) cancelAnimationFrame(aGameLoopId);
     aGameLoopId = null;
@@ -138,6 +140,7 @@ function quitToAsteroidsMenu() {
 
 function aHyperSpace() {
     if (aShip.hyperCooldown > 0) return;
+    if (aGame.paused) return;
     aShip.x = 100 + Math.random() * (aW - 200);
     aShip.y = 100 + Math.random() * (aH - 200);
     aShip.vx = 0; aShip.vy = 0;
@@ -148,6 +151,7 @@ function aHyperSpace() {
 function aShoot() {
     if (aBullets.length >= aSettings.maxBullets) return;
     if (!aGame.running) return;
+    if (aGame.paused) return;
     playShoot();
     aBullets.push({
         x: aShip.x + Math.cos(aShip.angle) * aShip.radius,
@@ -211,6 +215,7 @@ function aDestroyShip() {
 function aEndGame() {
     aGame.running = false;
     aGame.gameOver = true;
+    aGame.paused = false;
     stopThrustSound();
     playGameOver();
     
@@ -246,6 +251,12 @@ function checkAsteroidsAchievements(game) {
 
 function aUpdate() {
     if (!aGame.running) return;
+    
+    // ⏸ Pause
+    if (aGame.paused) {
+        stopThrustSound();
+        return;
+    }
     
     if (typeof saveGameState === 'function') {
         if (!aGame._lastSave || performance.now() - aGame._lastSave > 5000) {

@@ -1,5 +1,5 @@
 // ============================================
-// 🏓 PADDLE (avec sauvegarde + achievements)
+// 🏓 PADDLE (avec sauvegarde + achievements + pause)
 // ============================================
 var pCanvas, pCtx, pW, pH;
 var pSettings, pGame, pKeys, pPaddle, pBall;
@@ -32,7 +32,7 @@ function initPaddle() {
     }
     pCtx = pCanvas.getContext('2d');
     pSettings = paddleDiffSettings.normal;
-    pGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false };
+    pGame = { score: 0, lives: 3, level: 1, running: false, gameOver: false, paused: false };
     pKeys = { ArrowLeft: false, ArrowRight: false, Space: false };
     pPaddle = { x: 0, y: 0, width: 130, height: 16, speed: 10, baseWidth: 130 };
     pBall = { x: 0, y: 0, vx: 0, vy: 0, radius: 8, speed: 7, stuck: true, baseSpeed: 7 };
@@ -73,6 +73,7 @@ function pInit() {
     pResize();
     pGame.score = 0; pGame.lives = pSettings.lives;
     pGame.level = 1; pGame.gameOver = false;
+    pGame.paused = false;
     pGame._lastSave = 0;
     pPaddle.baseWidth = pSettings.paddleWidth;
     pPaddle.width = Math.min(pPaddle.baseWidth, pW * 0.35);
@@ -173,6 +174,7 @@ function startPaddleGame() {
     if (gv) gv.classList.add('active');
     pGame.running = false;
     pGame.gameOver = false;
+    pGame.paused = false;
     const go = document.getElementById('paddleGameOver');
     if (go) go.classList.remove('active');
     const got = document.getElementById('paddleGameOverTitle');
@@ -203,6 +205,7 @@ function startPaddleGame() {
 function quitToPaddleMenu() {
     pGame.running = false;
     pGame.gameOver = false;
+    pGame.paused = false;
     if (pGameLoopId) cancelAnimationFrame(pGameLoopId);
     pGameLoopId = null;
     const go = document.getElementById('paddleGameOver');
@@ -219,6 +222,12 @@ function pUpdate() {
             pBall.x = pPaddle.x + pPaddle.width / 2;
             pBall.y = pPaddle.y - pBall.radius - 2;
         }
+        return;
+    }
+    
+    // ⏸ Pause
+    if (pGame.paused) {
+        pMovePaddle(); // Permet de déplacer la raquette même en pause ? Non, on bloque tout
         return;
     }
     
@@ -437,6 +446,7 @@ function pNextLevel() {
 function pEndGame() {
     pGame.running = false;
     pGame.gameOver = true;
+    pGame.paused = false;
     playGameOver();
     
     if (typeof deleteGameState === 'function') deleteGameState('paddle');
